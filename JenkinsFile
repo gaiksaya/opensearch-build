@@ -77,7 +77,7 @@ pipeline {
 }
 
 void set_up() {
-  git url: 'https://github.com/opensearch-project/opensearch-build.git', branch: 'main'
+  git url: 'https://github.com/gaiksaya/opensearch-build.git', branch: '1.1.0-fork'
 
   withAWS(role: "${ARTIFACT_DOWNLOAD_ROLE_NAME}", roleAccount: "${AWS_ACCOUNT_PUBLIC}", duration: 900, roleSessionName: 'jenkins-session') {
     s3Download(file: "$WORKSPACE/artifacts", bucket: "${ARTIFACT_BUCKET_NAME}", path: "${ARTIFACT_PATH}/", force: true)
