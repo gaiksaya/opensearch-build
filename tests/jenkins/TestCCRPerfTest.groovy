@@ -19,6 +19,8 @@ import static org.hamcrest.MatcherAssert.assertThat
 import static com.lesfurets.jenkins.unit.global.lib.LibraryConfiguration.library
 import static com.lesfurets.jenkins.unit.global.lib.GitSource.gitSource
 
+import org.yaml.snakeyaml.Yaml
+
 class TestCCRPerfTest extends BuildPipelineTest {
 
     @Override   
@@ -27,9 +29,10 @@ class TestCCRPerfTest extends BuildPipelineTest {
 
         super.setUp()
 
+        def version = getValue('tests/jenkins/jenkins_lib_version.yaml', 'default' )
         helper.registerSharedLibrary(
             library().name('jenkins')
-                .defaultVersion('1.0.0')
+                .defaultVersion("${version}")
                 .allowOverride(true)
                 .implicit(true)
                 .targetPath('vars')
@@ -153,5 +156,12 @@ class TestCCRPerfTest extends BuildPipelineTest {
         }
 
         return shCommands
+    }
+
+    def getValue(yamlFile, key) {
+        Yaml yaml = new Yaml();
+        InputStream inputStream = new FileInputStream(yamlFile)
+        HashMap yamlMap = yaml.load(inputStream)
+        return yamlMap.get(key)
     }
 }
