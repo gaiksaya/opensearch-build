@@ -43,7 +43,7 @@ pipeline {
                                 echo "No new version bumps! Nothing to commit"
                             }
                         } catch (e) {
-                            error "Exception occurred while commiting" + e.toString()
+                            println "No new version bumps! Nothing to commit" + e.toString()
                         }
                     
                 }
