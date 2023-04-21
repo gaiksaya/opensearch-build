@@ -28,7 +28,7 @@ pipeline {
                         git checkout -b update-manifest-${BUILD_NUMBER}
                         """
                     }
-                        sh './manifests.sh update'
+                        // sh './manifests.sh update'
                         try {
                             def r = sh 'git add . && git commit -sm "Update manifests"'
                             if (r) {
