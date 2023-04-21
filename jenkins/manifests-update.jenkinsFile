@@ -29,7 +29,7 @@ pipeline {
                         """
                     }
                         // sh './manifests.sh update'
-                        sh 'touch file'
+                        // sh 'touch file'
                         try {
                             def r = sh(returnStdout: true, script: 'git add . && git commit -sm "Update manifests"').trim()
                             echo "echo r ${r}"
