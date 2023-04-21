@@ -29,10 +29,10 @@ pipeline {
                         """
                     }
                         // sh './manifests.sh update'
-                        sh 'touch file'
+                        // sh 'touch file'
                         try {
                             def status = sh(returnStdout: true, script: 'git add . && git commit -sm "Update manifests"')
-                            println status
+                            println "hello status, ${status}"
                             if (status) {
                             // sh """
                             //         git push origin update-manifest-${BUILD_NUMBER}
