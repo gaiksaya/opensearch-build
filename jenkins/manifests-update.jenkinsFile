@@ -32,6 +32,7 @@ pipeline {
                                 git config user.email "opensearch-infra@amazon.com"
                                 git config user.name "opensearch-ci"
                                 git checkout -b update-manifest-${BUILD_NUMBER}
+                                cat 'Hello World' > file
                         """
                             def status = sh(returnStdout: true, script: 'git status --porcelain')
                             if (status){
