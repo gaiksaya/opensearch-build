@@ -35,9 +35,9 @@ pipeline {
                                 touch file
                         """
                             def status = sh(returnStdout: true, script: 'git status --porcelain')
-                            if (status){
+                            if (status) {
                                 sh """
-                                    git add . && git commit -sm "Update manifests
+                                    git add . && git commit -sm "Update manifests"
                                     git push origin update-manifest-${BUILD_NUMBER}
                                     gh pr create --title '[AUTO] Update input manifests' --body 'I have noticed that a repo has incremented a version. This change updates the corresponding input manifests.' -H update-manifest-${BUILD_NUMBER} -B manifest-2
                                 """
