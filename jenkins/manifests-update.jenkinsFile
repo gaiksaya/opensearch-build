@@ -31,21 +31,15 @@ pipeline {
                         // sh './manifests.sh update'
                         // sh 'touch file'
                         try {
-                            def status = sh(returnStdout: true, script: 'git add . && git commit -sm "Update manifests"')
-                            println "hello status, ${status}"
-                            if (status) {
-                            // sh """
-                            //         git push origin update-manifest-${BUILD_NUMBER}
-                            //         gh pr create --title '[AUTO] Update input manifests' --body 'I have noticed that a repo has incremented a version. This change updates the corresponding input manifests.' -H update-manifest-${BUILD_NUMBER}
-                            //     """
-                            println "hello status, ${status}"
-                            } else {
-                                echo "No new version bumps! Nothing to commit"
-                            }
+                            sh(returnStdout: true, script: 'git add . && git commit -sm "Update manifests"')
+                            sh """
+                                git add . && git commit -sm "Update manifests
+                                git push origin update-manifest-${BUILD_NUMBER}
+                                gh pr create --title '[AUTO] Update input manifests' --body 'I have noticed that a repo has incremented a version. This change updates the corresponding input manifests.' -H update-manifest-${BUILD_NUMBER}
+                            """
                         } catch (e) {
-                            println "No new version bumps! Nothing to commit" + e.toString()
+                            error "No new version bumps! Nothing to commit " + e.toString()
                         }
-                    
                 }
             }
             post() {
