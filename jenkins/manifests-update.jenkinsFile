@@ -31,7 +31,8 @@ pipeline {
                         // sh './manifests.sh update'
                         sh 'touch file'
                         try {
-                            def r = sh 'git add . && git commit -sm "Update manifests"'
+                            def r = sh(returnStdout: true, script: 'git add . && git commit -sm "Update manifests"').trim()
+                            echo "echo r ${r}"
                             if (r) {
                             // sh """
                             //         git push origin update-manifest-${BUILD_NUMBER}
