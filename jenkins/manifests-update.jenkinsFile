@@ -22,24 +22,32 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'jenkins-github-bot-token', passwordVariable: 'GITHUB_TOKEN', usernameVariable: 'GITHUB_USER')]) {
                         sh """
-                        git remote set-url origin https://opensearch-ci:${GITHUB_TOKEN}@github.com/opensearch-project/opensearch-build
-                        git config user.email "opensearch-infra@amazon.com"
-                        git config user.name "opensearch-ci"
-                        git checkout -b update-manifest-${BUILD_NUMBER}
+                        git remote set-url origin https://opensearch-ci:${GITHUB_TOKEN}@github.com/gaiksaya/opensearch-build
                         """
                     }
                         // sh './manifests.sh update'
                         // sh 'touch file'
                         try {
-                            sh(returnStdout: true, script: 'git add . && git commit -sm "Update manifests"')
                             sh """
-                                git add . && git commit -sm "Update manifests
-                                git push origin update-manifest-${BUILD_NUMBER}
-                                gh pr create --title '[AUTO] Update input manifests' --body 'I have noticed that a repo has incremented a version. This change updates the corresponding input manifests.' -H update-manifest-${BUILD_NUMBER}
-                            """
+                                git config user.email "opensearch-infra@amazon.com"
+                                git config user.name "opensearch-ci"
+                                git checkout -b update-manifest-${BUILD_NUMBER}
+                                ./manifests.sh update
+                        """
+                            def status = sh(returnStdout: true, script: 'git status --porcelain')
+                            if (status){
+                                sh """
+                                    git add . && git commit -sm "Update manifests
+                                    git push origin update-manifest-${BUILD_NUMBER}
+                                    gh pr create --title '[AUTO] Update input manifests' --body 'I have noticed that a repo has incremented a version. This change updates the corresponding input manifests.' -H update-manifest-${BUILD_NUMBER} -B manifest-2
+                                """
+                            } else {
+                                println "Nothing to commit!"
+                            }
                         } catch (e) {
-                            error "No new version bumps! Nothing to commit " + e.toString()
+                            error "An error occured while adding new manifest!" + e.toString()
                         }
+                    
                 }
             }
             post() {
