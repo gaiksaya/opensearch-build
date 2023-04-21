@@ -20,10 +20,12 @@ pipeline {
             }
             steps {
                 script {
+                    withCredentials([usernamePassword(credentialsId: 'jenkins-github-bot-token', passwordVariable: 'GITHUB_TOKEN', usernameVariable: 'GITHUB_USER')]) {
                         // sh './manifests.sh update'
                         // sh 'touch file'
                         try {
                             sh """
+                                git remote set-url origin https://opensearch-ci:${GITHUB_TOKEN}@github.com/gaiksaya/opensearch-build
                                 git config user.email "opensearch-infra@amazon.com"
                                 git config user.name "opensearch-ci"
                                 git checkout -b update-manifest-${BUILD_NUMBER}
@@ -34,17 +36,15 @@ pipeline {
                                 sh """
                                     git add . && git commit -sm "Update manifests"
                                     git push origin update-manifest-${BUILD_NUMBER}
+                                    gh pr create --title '[AUTO] Update input manifests' --body 'I have noticed that a repo has incremented a version. This change updates the corresponding input manifests.' -H update-manifest-${BUILD_NUMBER} -B manifest-2
                                 """
-                                withCredentials([usernamePassword(credentialsId: 'jenkins-github-bot-token', passwordVariable: 'GITHUB_TOKEN', usernameVariable: 'GITHUB_USER')]) {
-                                    sh "gh pr create --title '[AUTO] Update input manifests' --body 'I have noticed that a repo has incremented a version. This change updates the corresponding input manifests.' -H update-manifest-${BUILD_NUMBER} -B manifest-2"
-                    }
                             } else {
-                                println "Nothing to commit!"
+                                println 'Nothing to commit!'
                             }
                         } catch (e) {
-                            error "An error occured while adding new manifest!" + e.toString()
+                            error 'An error occured while adding new manifest!' + e.toString()
                         }
-                    
+                    }
                 }
             }
             post() {
