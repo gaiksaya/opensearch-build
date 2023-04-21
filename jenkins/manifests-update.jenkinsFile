@@ -6,7 +6,7 @@ pipeline {
     agent none
     triggers {
         cron('H 0 * * *')
-        }
+    }
     stages {
         stage('Update Manifests') {
             agent {
@@ -26,12 +26,23 @@ pipeline {
                         git config user.email "opensearch-infra@amazon.com"
                         git config user.name "opensearch-ci"
                         git checkout -b update-manifest-${BUILD_NUMBER}
-                        ./manifests.sh update
-                        git add . && git commit -sm "Update manifests"
-                        git push origin update-manifest-${BUILD_NUMBER}
-                        gh pr create --title '[AUTO] Update input manifests' --body 'I have noticed that a repo has incremented a version. This change updates the corresponding input manifests.' -H update-manifest-${BUILD_NUMBER}
                         """
                     }
+                        sh './manifests.sh update'
+                        try {
+                            def r = sh 'git add . && git commit -sm "Update manifests"'
+                            if (r) {
+                            sh """
+                                    git push origin update-manifest-${BUILD_NUMBER}
+                                    gh pr create --title '[AUTO] Update input manifests' --body 'I have noticed that a repo has incremented a version. This change updates the corresponding input manifests.' -H update-manifest-${BUILD_NUMBER}
+                                """
+                            } else {
+                                echo "No new version bumps! Nothing to commit"
+                            }
+                        } catch (e) {
+                            error "Exception occurred while commiting" + e.toString()
+                        }
+                    
                 }
             }
             post() {
