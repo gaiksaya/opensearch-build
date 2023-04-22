@@ -23,10 +23,10 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'jenkins-github-bot-token', passwordVariable: 'GITHUB_TOKEN', usernameVariable: 'GITHUB_USER')]) {
                         try {
                             sh """
-                                git remote set-url origin https://opensearch-ci:${GITHUB_TOKEN}@github.com/opensearch-project/opensearch-build
+                                git remote set-url origin https://opensearch-ci:${GITHUB_TOKEN}@github.com/gaiksaya/opensearch-build
                                 git config user.email "opensearch-infra@amazon.com"
                                 git config user.name "opensearch-ci"
-                                git checkout -b update-manifest
+                                git checkout -b update-manifest --force
                                 ./manifests.sh update
                         """
                             def status = sh(returnStdout: true, script: 'git status --porcelain')
