@@ -64,6 +64,7 @@ pipeline {
             agent { label agent_nodes["linux_x64"]}
             steps {
                 script {
+                    sh 'ls -l'
                     if (TEST_MANIFEST == '' || !fileExists("manifests/${TEST_MANIFEST}")) {
                         currentBuild.result = 'ABORTED'
                         error("Integration Tests failed to start. Test manifest was not provided or not found in manifests/${TEST_MANIFEST}.")
