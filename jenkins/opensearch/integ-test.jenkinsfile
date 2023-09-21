@@ -81,7 +81,7 @@ pipeline {
                     )
 
                     def buildManifestObj = lib.jenkins.BuildManifest.new(readYaml(file: BUILD_MANIFEST))
-                    def testManifestObj = lib.jenkins.BuildManifest.new(readYaml(file: TEST_MANIFEST))
+                    def testManifestObj = lib.jenkins.BuildManifest.new(readYaml(file: "manifests/${TEST_MANIFEST}"))
                     def componentList = COMPONENT_NAME ? COMPONENT_NAME.trim().split(" ") as List : testManifestObj.getNames()
                     env.architecture = buildManifestObj.getArtifactArchitecture()
                     env.platform = buildManifestObj.getArtifactPlatform()
