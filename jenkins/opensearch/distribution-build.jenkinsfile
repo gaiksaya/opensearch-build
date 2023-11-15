@@ -263,7 +263,13 @@ pipeline {
                             }
                             post {
                                 always {
-                                    postCleanup()
+                                    script {
+                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
+                                        if (findFailedPlugins != null) {
+                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
+                                            }
+                                        postCleanup()
+                                    }
                                 }
                             }
                         }
@@ -310,6 +316,10 @@ pipeline {
                             post {
                                 always {
                                     script {
+                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
+                                        if (findFailedPlugins != null) {
+                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
+                                            }
                                         lib.jenkins.Messages.new(this).add(
                                             "${STAGE_NAME}",
                                             lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
@@ -356,7 +366,13 @@ pipeline {
                             }
                             post {
                                 always {
+                                    script {
+                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
+                                        if (findFailedPlugins != null) {
+                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
+                                            }
                                     postCleanup()
+                                }
                                 }
                             }
                         }
@@ -393,6 +409,10 @@ pipeline {
                             post {
                                 always {
                                     script {
+                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
+                                        if (findFailedPlugins != null) {
+                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
+                                            }
                                         lib.jenkins.Messages.new(this).add(
                                             "${STAGE_NAME}",
                                             lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
@@ -459,6 +479,10 @@ pipeline {
                     post {
                         always {
                             script {
+                                def findFailedPlugins = buildMessage(search: 'Failed plugins')
+                                if (findFailedPlugins != null) {
+                                    unstable("Some of the plugins failed to build: ${findFailedPlugins}")
+                                    }
                                 lib.jenkins.Messages.new(this).add(
                                     "${STAGE_NAME}",
                                     lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
@@ -503,7 +527,13 @@ pipeline {
                             }
                             post {
                                 always {
-                                    postCleanup()
+                                    script {
+                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
+                                        if (findFailedPlugins != null) {
+                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
+                                            }
+                                        postCleanup()
+                                    }
                                 }
                             }
                         }
@@ -550,6 +580,10 @@ pipeline {
                             post {
                                 always {
                                     script {
+                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
+                                        if (findFailedPlugins != null) {
+                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
+                                            }
                                         lib.jenkins.Messages.new(this).add(
                                             "${STAGE_NAME}",
                                             lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
@@ -596,7 +630,13 @@ pipeline {
                             }
                             post {
                                 always {
-                                    postCleanup()
+                                    script{
+                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
+                                        if (findFailedPlugins != null) {
+                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
+                                            }
+                                        postCleanup()
+                                    }
                                 }
                             }
                         }
@@ -633,6 +673,7 @@ pipeline {
                             post {
                                 always {
                                     script {
+
                                         lib.jenkins.Messages.new(this).add(
                                             "${STAGE_NAME}",
                                             lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
