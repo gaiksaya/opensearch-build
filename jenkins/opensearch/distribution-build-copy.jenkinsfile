@@ -142,21 +142,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            def buildManifestObj = buildAssembleUpload(
-                                componentName: "${COMPONENT_NAME}",
-                                inputManifest: "manifests/${INPUT_MANIFEST}",
-                                platform: 'linux',
-                                architecture: 'x64',
-                                distribution: 'tar',
-                                continueOnError: params.CONTINUE_ON_ERROR
-                            )
-                            String buildManifestUrl = buildManifestObj.getUrl(JOB_NAME, BUILD_NUMBER)
-                            String artifactUrl = buildManifestObj.getArtifactUrl(JOB_NAME, BUILD_NUMBER)
-                            env.ARTIFACT_URL_LINUX_X64_TAR = artifactUrl
-                            env.INDEX_FILE_PATH = buildManifestObj.getIndexFileRoot("${JOB_NAME}")
-
-                            echo "buildManifestUrl (linux, x64, tar): ${buildManifestUrl}"
-                            echo "artifactUrl (linux, x64, tar): ${artifactUrl}"
+                            sh("./build.sh manifests/${INPUT_MANIFEST} --component OpenSearch performance-analyzer --platform linux -a x64 -d tar --continue-on-error")
                         }
                     }
                     post {
@@ -197,15 +183,7 @@ pipeline {
                             }
                             steps {
                                 script {
-                                    buildArchive(
-                                        componentName: "${COMPONENT_NAME}",
-                                        inputManifest: "manifests/${INPUT_MANIFEST}",
-                                        platform: 'linux',
-                                        architecture: 'x64',
-                                        distribution: 'rpm',
-                                        continueOnError: params.CONTINUE_ON_ERROR,
-                                        stashName: "build-archive-linux-x64-rpm-${JOB_NAME}-${BUILD_NUMBER}"
-                                    )
+                                    sh("./build.sh manifests/${INPUT_MANIFEST} --component OpenSearch performance-analyzer --platform linux -a x64 -d rpm --continue-on-error")
                                 }
                             }
                             post {
