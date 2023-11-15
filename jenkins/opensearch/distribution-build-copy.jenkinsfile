@@ -141,22 +141,15 @@ pipeline {
                         }
                     }
                     steps {
-                        script {
-                            sh("./build.sh manifests/${INPUT_MANIFEST} --component OpenSearch performance-analyzer --platform linux -a x64 -d tar --continue-on-error")
+                        def stageLog = sh (returnStdout: true, script: "./build.sh manifests/${INPUT_MANIFEST} --component OpenSearch performance-analyzer --platform linux -a x64 -d tar --continue-on-error")
+                        if (stageLog.contains('Failed Plugins')){
+                            unstable("Some of the plugins failed to build")
+                            }
                         }
                     }
                     post {
                         always {
                             script {
-                                def findFailedPlugins = buildMessage(search: 'Failed plugins')
-                                if (findFailedPlugins != null) {
-                                    unstable("Some of the plugins failed to build: ${findFailedPlugins}")
-                                    }
-                                lib.jenkins.Messages.new(this).add(
-                                    "${STAGE_NAME}",
-                                    lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
-                                )
-
                                 postCleanup()
                             }
                         }
@@ -189,10 +182,6 @@ pipeline {
                             post {
                                 always {
                                     script {
-                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
-                                        if (findFailedPlugins != null) {
-                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
-                                            }
                                         postCleanup()
                                     }
                                 }
@@ -201,7 +190,6 @@ pipeline {
                     }
                 }
             }
-        }
     }
     post {
         always {
