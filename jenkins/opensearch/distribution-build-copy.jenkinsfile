@@ -33,6 +33,24 @@ pipeline {
         )
     }
     stages {
+        stage('verify-parameters') {
+            agent {
+                docker {
+                    label AGENT_LINUX_X64
+                    image 'docker/library/alpine:3'
+                    registryUrl 'https://public.ecr.aws/'
+                    alwaysPull true
+                }
+            }
+            steps {
+                script {
+                    echo('Detect Docker Images and Related Parameters')
+                    dockerAgent = detectDockerAgent()
+                    env.javaVersionNumber = dockerAgent.javaVersion.replaceAll('[^0-9]', '') // Only get number
+                    currentBuild.description = INPUT_MANIFEST
+                }
+            }
+        }
         stage('build') {
             parallel {
                 stage('build-and-test-linux-x64-tar') {
