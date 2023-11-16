@@ -66,8 +66,10 @@ pipeline {
                     steps {
                         script {
                             sh(returnStdout: true, script: "echo 'Hello world and Failed Plugins'")
+                            sh 'echo error /FATAL/ > failOnFATAL'
                             def logParser = [:]
-                            logParser = step([$class: 'LogParserPublisher', failBuildOnError : false])
+                            logParser = step([$class: 'LogParserPublisher', failBuildOnError : false, parsingRulesPath: "${WORKSPACE}/failOnFATAL"])
+                            println(logParser)
                             def errorLogs = logParser["Failed Plugins"]
                             println(errorLogs)
                         }
