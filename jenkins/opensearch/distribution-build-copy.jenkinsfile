@@ -78,7 +78,7 @@ pipeline {
                             //         useProjectRule: true])
                             //     println(logs)
                             def logs = sh( returnStdout: true, script: "echo manifests/${INPUT_MANIFEST}")
-                            println('Logs here', logs)
+                            println('Logs here'+logs)
                         }
                     }
                     post {
