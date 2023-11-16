@@ -72,10 +72,11 @@ pipeline {
                             '''
                             error /ERROR/
                             ''')
-                                step([$class: 'LogParserPublisher',
+                                def logs = step([$class: 'LogParserPublisher',
                                     failBuildOnError: true,
                                     projectRulePath: 'project.rules',
                                     useProjectRule: true])
+                                println(logs)
                         }
                     }
                     post {
