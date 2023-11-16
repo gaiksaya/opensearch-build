@@ -78,9 +78,9 @@ pipeline {
                             //         useProjectRule: true])
                             //     println(logs)
                             def logs = sh( returnStdout: true, script: "./build.sh manifests/${INPUT_MANIFEST} --component OpenSearch performance-analyzer --platform linux -a x64 -d tar --continue-on-error")
-                            def parsed = logs.split('\n')
-                            println('Here are parsed logs: '+ parsed)
-                            if (parsed.contains('Failed plugins:')){
+                            String[] parsed = logs.split('\n')
+                            // println('Here are parsed logs: '+ parsed)
+                            if (parsed.any{e -> e.contains('Failed plugins are')}){
                                 println('Vola!')
                             } else {
                                 println('Alas!')
