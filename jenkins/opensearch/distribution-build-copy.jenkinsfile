@@ -52,6 +52,7 @@ pipeline {
             }
         }
         stage('build') {
+            parallel {
                 stage('build-and-test-linux-x64-tar') {
                     agent {
                         docker {
@@ -79,6 +80,7 @@ pipeline {
                         }
                     }
                 }
+            }
         }
     }
 }
