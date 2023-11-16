@@ -65,7 +65,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            sh(returnStdout: true, script: "./build.sh manifests/${INPUT_MANIFEST} --component OpenSearch performance-analyzer --platform linux -a x64 -d tar --continue-on-error")
+                            sh(returnStdout: true, script: "echo 'Hello world and Failed Plugins'")
                             def logParser = [:]
                             logParser = step([$class: 'LogParserPublisher', failBuildOnError : false])
                             def errorLogs = logParser["Failed Plugins"]
