@@ -66,9 +66,10 @@ pipeline {
                     steps {
                         script {
                             echo "ERROR: Some error"
+                            echo "Failed plugins are PA, Blah"
                             writeFile(file: 'project.rules', text:
                             '''
-                            error /ERROR/
+                            warn /Failed plugins/
                             ''')
                                 def logs = step([$class: 'LogParserPublisher',
                                     unstableOnWarning: true,
