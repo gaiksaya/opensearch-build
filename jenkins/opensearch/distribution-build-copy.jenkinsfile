@@ -66,14 +66,12 @@ pipeline {
                     steps {
                         script {
                             echo "ERROR: Some error"
-                                // Usually I assume a project rules file will be stored in
-                                // some repository and are not generated on the fly
-                                writeFile(file: 'project.rules', text:
+                            writeFile(file: 'project.rules', text:
                             '''
                             error /ERROR/
                             ''')
                                 def logs = step([$class: 'LogParserPublisher',
-                                    failBuildOnError: true,
+                                    unstableOnWarning: true,
                                     projectRulePath: 'project.rules',
                                     useProjectRule: true])
                                 println(logs)
