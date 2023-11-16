@@ -72,7 +72,7 @@ pipeline {
                     steps {
                         script {
                             def stageLog = sh (returnStdout: true, script: "echo ${INPUT_MANIFEST}")
-                            sh("echo ${stageLog} && echo ${stageLog} > log.txt")
+                            sh(script: "echo ${stageLog} > log.txt")
                             // if (stageLog.contains('Failed Plugins')) {
                             //     unstable("Some of the plugins failed to build")
                             //     }
