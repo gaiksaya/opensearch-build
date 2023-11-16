@@ -353,7 +353,7 @@ pipeline {
                             }
                             steps {
                                 script {
-                                    buildArchive(
+                                    def buildLogs = buildArchive(
                                         componentName: "${COMPONENT_NAME}",
                                         inputManifest: "manifests/${INPUT_MANIFEST}",
                                         platform: 'linux',

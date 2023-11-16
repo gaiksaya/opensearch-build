@@ -77,8 +77,11 @@ pipeline {
                             //         projectRulePath: 'project.rules',
                             //         useProjectRule: true])
                             //     println(logs)
-                            def logs = sh( returnStdout: true, script: "echo manifests/${INPUT_MANIFEST}")
-                            println('Logs here'+logs)
+                            def logs = sh( returnStdout: true, script: "./build.sh manifests/${INPUT_MANIFEST} --component OpenSearch performance-analyzer --platform linux -a x64 -d tar --continue-on-error")
+                            def parsed = logs.split('\n')
+                            if (parsed.contains('Failed plugins:')){
+                                println('Vola!')
+                            }
                         }
                     }
                     post {
