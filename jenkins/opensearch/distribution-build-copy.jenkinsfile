@@ -71,11 +71,11 @@ pipeline {
                     }
                     steps {
                         script {
-                        def stageLog = sh (returnStdout: true, script: "./build.sh manifests/${INPUT_MANIFEST} --component OpenSearch performance-analyzer --platform linux -a x64 -d tar --continue-on-error")
-                        sh("echo ${stageLog} && echo ${stageLog} > log.txt")
-                        if (stageLog.contains('Failed Plugins')){
-                            unstable("Some of the plugins failed to build")
-                            }
+                            def stageLog = sh (returnStdout: true, script: "echo ${INPUT_MANIFEST}")
+                            sh("echo ${stageLog} && echo ${stageLog} > log.txt")
+                            // if (stageLog.contains('Failed Plugins')) {
+                            //     unstable("Some of the plugins failed to build")
+                            //     }
                         }
                     }
                     post {
@@ -87,40 +87,40 @@ pipeline {
                         }
                     }
                 }
-                stage('build-and-test-linux-x64-rpm') {
-                    when {
-                        beforeAgent true
-                        expression {
-                            params.BUILD_PLATFORM.contains('linux')
-                        }
-                    }
-                    agent { label AGENT_LINUX_X64 }
-                    stages {
-                        stage('build-archive-linux-x64-rpm') {
-                            agent {
-                                docker {
-                                    label AGENT_LINUX_X64
-                                    image dockerAgent.image
-                                    args dockerAgent.args
-                                    registryUrl 'https://public.ecr.aws/'
-                                    alwaysPull true
-                                }
-                            }
-                            steps {
-                                script {
-                                    sh("./build.sh manifests/${INPUT_MANIFEST} --component OpenSearch performance-analyzer --platform linux -a x64 -d rpm --continue-on-error")
-                                }
-                            }
-                            post {
-                                always {
-                                    script {
-                                        postCleanup()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                // stage('build-and-test-linux-x64-rpm') {
+                //     when {
+                //         beforeAgent true
+                //         expression {
+                //             params.BUILD_PLATFORM.contains('linux')
+                //         }
+                //     }
+                //     agent { label AGENT_LINUX_X64 }
+                //     stages {
+                //         stage('build-archive-linux-x64-rpm') {
+                //             agent {
+                //                 docker {
+                //                     label AGENT_LINUX_X64
+                //                     image dockerAgent.image
+                //                     args dockerAgent.args
+                //                     registryUrl 'https://public.ecr.aws/'
+                //                     alwaysPull true
+                //                 }
+                //             }
+                //             steps {
+                //                 script {
+                //                     sh("./build.sh manifests/${INPUT_MANIFEST} --component OpenSearch performance-analyzer --platform linux -a x64 -d rpm --continue-on-error")
+                //                 }
+                //             }
+                //             post {
+                //                 always {
+                //                     script {
+                //                         postCleanup()
+                //                     }
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
             }
         }
     }
