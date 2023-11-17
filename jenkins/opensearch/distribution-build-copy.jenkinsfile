@@ -108,7 +108,7 @@ pipeline {
                     steps {
                         script {
                             def buildManifestObj = buildAssembleUpload(
-                                componentName: "${COMPONENT_NAME}",
+                                componentName: "performance-analyzer",
                                 inputManifest: "manifests/${INPUT_MANIFEST}",
                                 platform: 'linux',
                                 architecture: 'x64',
