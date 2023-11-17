@@ -122,7 +122,7 @@ pipeline {
                     post {
                         always {
                             script {
-                                def stageLogs = logParserForStage('build-and-test-linux-x64-tar')
+                                def stageLogs = logParserForStage(stageName: 'build-and-test-linux-x64-tar')
                                 if (stageLogs.any{e -> e.contains('Failed plugins are')}){
                                     unstable('Plugins failed')
                                 } else {
