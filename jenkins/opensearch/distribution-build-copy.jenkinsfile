@@ -134,12 +134,6 @@ pipeline {
                     }
                 }
                 stage('build-and-test-linux-arm64-tar') {
-                    when {
-                        beforeAgent true
-                        expression {
-                            params.BUILD_PLATFORM.contains('linux')
-                        }
-                    }
                     agent {
                         docker {
                             label AGENT_LINUX_ARM64
@@ -157,7 +151,7 @@ pipeline {
                                 platform: 'linux',
                                 architecture: 'arm64',
                                 distribution: 'tar',
-                                continueOnError: params.CONTINUE_ON_ERROR
+                                continueOnError: true
                             )
                             String buildManifestUrl = buildManifestObj.getUrl(JOB_NAME, BUILD_NUMBER)
                             String artifactUrl = buildManifestObj.getArtifactUrl(JOB_NAME, BUILD_NUMBER)
