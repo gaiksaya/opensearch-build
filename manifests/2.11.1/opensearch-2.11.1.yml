@@ -175,7 +175,7 @@ components:
       - gradle:properties:version
   - name: performance-analyzer
     repository: https://github.com/opensearch-project/performance-analyzer.git
-    ref: '2.11'
+    ref: 3b868f669485c08dbf76836dc27b547066c6db4f
     platforms:
       - linux
     checks:
