@@ -164,8 +164,6 @@ pipeline {
                                 def stageLogs = logParserForStage(stageName: 'build-and-test-linux-arm64-tar')
                                 if (stageLogs.any{e -> e.contains('Failed plugins are')}){
                                     unstable('Plugins failed')
-                                } else {
-                                    println('Alas!')
                                 }
                                 postCleanup()
                             }

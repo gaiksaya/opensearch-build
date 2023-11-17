@@ -7,9 +7,9 @@
  * compatible open source license.
  */
 
-lib = library(identifier: 'jenkins@5.11.1', retriever: modernSCM([
+lib = library(identifier: 'jenkins@unstable', retriever: modernSCM([
     $class: 'GitSCMSource',
-    remote: 'https://github.com/opensearch-project/opensearch-build-libraries.git',
+    remote: 'https://github.com/gaiksaya/opensearch-build-libraries.git',
 ]))
 
 pipeline {
@@ -124,27 +124,27 @@ pipeline {
         }
         stage('build') {
             parallel {
-                stage('Trigger-min-snapshot-build') {
-                    agent {
-                        docker {
-                            label 'Jenkins-Agent-AL2023-X64-C54xlarge-Docker-Host'
-                            image 'docker/library/alpine:3'
-                            registryUrl 'https://public.ecr.aws/'
-                            alwaysPull true
-                        }
-                    }
-                    steps {
-                        script {
-                            def snapshotBuild =
-                                build job: 'publish-opensearch-min-snapshots',
-                                propagate: false,
-                                wait: false,                               
-                                parameters: [
-                                    string(name: 'INPUT_MANIFEST', value: "${INPUT_MANIFEST}"),
-                                ]
-                        }
-                    }
-                }
+                // stage('Trigger-min-snapshot-build') {
+                //     agent {
+                //         docker {
+                //             label 'Jenkins-Agent-AL2023-X64-C54xlarge-Docker-Host'
+                //             image 'docker/library/alpine:3'
+                //             registryUrl 'https://public.ecr.aws/'
+                //             alwaysPull true
+                //         }
+                //     }
+                //     steps {
+                //         script {
+                //             def snapshotBuild =
+                //                 build job: 'publish-opensearch-min-snapshots',
+                //                 propagate: false,
+                //                 wait: false,                               
+                //                 parameters: [
+                //                     string(name: 'INPUT_MANIFEST', value: "${INPUT_MANIFEST}"),
+                //                 ]
+                //         }
+                //     }
+                // }
                 stage('build-and-test-linux-x64-tar') {
                     when {
                         beforeAgent true
@@ -175,55 +175,15 @@ pipeline {
                             String artifactUrl = buildManifestObj.getArtifactUrl(JOB_NAME, BUILD_NUMBER)
                             env.ARTIFACT_URL_LINUX_X64_TAR = artifactUrl
                             env.INDEX_FILE_PATH = buildManifestObj.getIndexFileRoot("${JOB_NAME}")
-
-                            echo "buildManifestUrl (linux, x64, tar): ${buildManifestUrl}"
-                            echo "artifactUrl (linux, x64, tar): ${artifactUrl}"
-
-                            parallel([
-                                'integ-test': {
-                                    Boolean skipIntegTests = (INTEG_TEST_JOB_NAME == '' || TEST_MANIFEST == '' || buildManifestUrl == '')
-                                    echo "${skipIntegTests ? 'Skipping integration tests as one of the values has empty string: INTEG_TEST_JOB_NAME, TEST_MANIFEST, buildManifestUrl' : 'Running integration tests'}"
-                                    if (!skipIntegTests) {
-                                        def integTestResults =
-                                            build job: INTEG_TEST_JOB_NAME,
-                                            propagate: false,
-                                            wait: false,
-                                            parameters: [
-                                                string(name: 'TEST_MANIFEST', value: TEST_MANIFEST),
-                                                string(name: 'BUILD_MANIFEST_URL', value: buildManifestUrl)
-                                            ]
-                                    }
-                                },
-                                'bwc-test': {
-                                    Boolean skipBwcTests = (BWC_TEST_JOB_NAME == '' || TEST_MANIFEST == '' || buildManifestUrl == '')
-                                    echo "${skipBwcTests ? 'Skipping BWC tests as one of the values has empty string: BWC_TEST_JOB_NAME, TEST_MANIFEST, buildManifestUrl' : 'Running BWC tests'}"
-                                    if (!skipBwcTests) {
-                                        def bwcTestResults =
-                                            build job: BWC_TEST_JOB_NAME,
-                                            propagate: false,
-                                            wait: false,
-                                            parameters: [
-                                                string(name: 'TEST_MANIFEST', value: TEST_MANIFEST),
-                                                string(name: 'BUILD_MANIFEST_URL', value: buildManifestUrl),
-                                                string(name: 'AGENT_LABEL', value: AGENT_LINUX_X64)
-                                            ]
-                                    }
-                                }
-                            ])
                         }
                     }
                     post {
                         always {
                             script {
-                                def findFailedPlugins = buildMessage(search: 'Failed plugins')
-                                if (findFailedPlugins != null) {
-                                    unstable("Some of the plugins failed to build: ${findFailedPlugins}")
-                                    }
-                                lib.jenkins.Messages.new(this).add(
-                                    "${STAGE_NAME}",
-                                    lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
-                                )
-
+                                def stageLogs = logParserForStage(stageName: 'build-and-test-linux-x64-tar')
+                                if (stageLogs.any{e -> e.contains('Failed plugins are')}){
+                                    unstable('Plugins failed')
+                                }
                                 postCleanup()
                             }
                         }
@@ -263,13 +223,11 @@ pipeline {
                             }
                             post {
                                 always {
-                                    script {
-                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
-                                        if (findFailedPlugins != null) {
-                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
-                                            }
-                                        postCleanup()
-                                    }
+                                def stageLogs = logParserForStage(stageName: 'build-and-test-linux-x64-rpm')
+                                if (stageLogs.any{e -> e.contains('Failed plugins are')}){
+                                    unstable('Plugins failed')
+                                }
+                                    postCleanup()
                                 }
                             }
                         }
@@ -301,30 +259,11 @@ pipeline {
                                     echo "artifactUrl (linux, x64, rpm): ${artifactUrl}"
 
                                     String bundleManifestUrl = buildManifestObj.getBundleManifestUrl(JOB_NAME, BUILD_NUMBER)
-
-                                    echo "Trigger rpm validation for linux x64 rpm ${bundleManifestUrl}"
-                                    def rpmValidationResults =
-                                        build job: 'rpm-validation',
-                                        propagate: false,
-                                        wait: false,
-                                        parameters: [
-                                            string(name: 'BUNDLE_MANIFEST_URL', value: bundleManifestUrl),
-                                            string(name: 'AGENT_LABEL', value: AGENT_LINUX_X64)
-                                        ]
                                 }
                             }
                             post {
                                 always {
                                     script {
-                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
-                                        if (findFailedPlugins != null) {
-                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
-                                            }
-                                        lib.jenkins.Messages.new(this).add(
-                                            "${STAGE_NAME}",
-                                            lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
-                                        )
-
                                         postCleanup()
                                     }
                                 }
@@ -353,7 +292,7 @@ pipeline {
                             }
                             steps {
                                 script {
-                                    def buildLogs = buildArchive(
+                                    buildArchive(
                                         componentName: "${COMPONENT_NAME}",
                                         inputManifest: "manifests/${INPUT_MANIFEST}",
                                         platform: 'linux',
@@ -366,13 +305,11 @@ pipeline {
                             }
                             post {
                                 always {
-                                    script {
-                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
-                                        if (findFailedPlugins != null) {
-                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
-                                            }
-                                    postCleanup()
+                                def stageLogs = logParserForStage(stageName: 'build-and-test-linux-x64-deb')
+                                if (stageLogs.any{e -> e.contains('Failed plugins are')}){
+                                    unstable('Plugins failed')
                                 }
+                                    postCleanup()
                                 }
                             }
                         }
@@ -409,15 +346,6 @@ pipeline {
                             post {
                                 always {
                                     script {
-                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
-                                        if (findFailedPlugins != null) {
-                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
-                                            }
-                                        lib.jenkins.Messages.new(this).add(
-                                            "${STAGE_NAME}",
-                                            lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
-                                        )
-
                                         postCleanup()
                                     }
                                 }
@@ -454,40 +382,15 @@ pipeline {
                             String buildManifestUrl = buildManifestObj.getUrl(JOB_NAME, BUILD_NUMBER)
                             String artifactUrl = buildManifestObj.getArtifactUrl(JOB_NAME, BUILD_NUMBER)
                             env.ARTIFACT_URL_LINUX_ARM64_TAR = artifactUrl
-
-                            echo "buildManifestUrl (linux, arm64, tar): ${buildManifestUrl}"
-                            echo "artifactUrl (linux, arm64, tar): ${artifactUrl}"
-
-                            parallel([
-                                'integ-test': {
-                                    Boolean skipIntegTests = (INTEG_TEST_JOB_NAME == '' || TEST_MANIFEST == '' || buildManifestUrl == '')
-                                    echo "${skipIntegTests ? 'Skipping integration tests as one of the values has empty string: INTEG_TEST_JOB_NAME, TEST_MANIFEST, buildManifestUrl' : 'Running integration tests'}"
-                                    if (!skipIntegTests) {
-                                        def integTestResults =
-                                            build job: INTEG_TEST_JOB_NAME,
-                                            propagate: false,
-                                            wait: false,
-                                            parameters: [
-                                                string(name: 'TEST_MANIFEST', value: TEST_MANIFEST),
-                                                string(name: 'BUILD_MANIFEST_URL', value: buildManifestUrl)
-                                            ]
-                                    }
-                                }
-                            ])
                         }
                     }
                     post {
                         always {
                             script {
-                                def findFailedPlugins = buildMessage(search: 'Failed plugins')
-                                if (findFailedPlugins != null) {
-                                    unstable("Some of the plugins failed to build: ${findFailedPlugins}")
-                                    }
-                                lib.jenkins.Messages.new(this).add(
-                                    "${STAGE_NAME}",
-                                    lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
-                                )
-
+                                def stageLogs = logParserForStage(stageName: 'build-and-test-linux-arm64-tar')
+                                if (stageLogs.any{e -> e.contains('Failed plugins are')}){
+                                    unstable('Plugins failed')
+                                }
                                 postCleanup()
                             }
                         }
@@ -527,13 +430,11 @@ pipeline {
                             }
                             post {
                                 always {
-                                    script {
-                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
-                                        if (findFailedPlugins != null) {
-                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
-                                            }
-                                        postCleanup()
-                                    }
+                                def stageLogs = logParserForStage(stageName: 'build-and-test-linux-arm64-rpm')
+                                if (stageLogs.any{e -> e.contains('Failed plugins are')}){
+                                    unstable('Plugins failed')
+                                }
+                                    postCleanup()
                                 }
                             }
                         }
@@ -560,35 +461,11 @@ pipeline {
                                     String buildManifestUrl = buildManifestObj.getUrl(JOB_NAME, BUILD_NUMBER)
                                     String artifactUrl = buildManifestObj.getArtifactUrl(JOB_NAME, BUILD_NUMBER)
                                     env.ARTIFACT_URL_LINUX_ARM64_RPM = artifactUrl
-
-                                    echo "buildManifestUrl (linux, arm64, rpm): ${buildManifestUrl}"
-                                    echo "artifactUrl (linux, arm64, rpm): ${artifactUrl}"
-
-                                    String bundleManifestUrl = buildManifestObj.getBundleManifestUrl(JOB_NAME, BUILD_NUMBER)
-
-                                    echo "Trigger rpm validation for linux arm64 rpm ${bundleManifestUrl}"
-                                    def rpmValidationResults =
-                                        build job: 'rpm-validation',
-                                        propagate: false,
-                                        wait: false,
-                                        parameters: [
-                                            string(name: 'BUNDLE_MANIFEST_URL', value: bundleManifestUrl),
-                                            string(name: 'AGENT_LABEL', value: AGENT_LINUX_ARM64)
-                                        ]
                                 }
                             }
                             post {
                                 always {
                                     script {
-                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
-                                        if (findFailedPlugins != null) {
-                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
-                                            }
-                                        lib.jenkins.Messages.new(this).add(
-                                            "${STAGE_NAME}",
-                                            lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
-                                        )
-
                                         postCleanup()
                                     }
                                 }
@@ -630,13 +507,11 @@ pipeline {
                             }
                             post {
                                 always {
-                                    script{
-                                        def findFailedPlugins = buildMessage(search: 'Failed plugins')
-                                        if (findFailedPlugins != null) {
-                                            unstable("Some of the plugins failed to build: ${findFailedPlugins}")
-                                            }
-                                        postCleanup()
-                                    }
+                                def stageLogs = logParserForStage(stageName: 'build-and-test-linux-arm64-deb')
+                                if (stageLogs.any{e -> e.contains('Failed plugins are')}){
+                                    unstable('Plugins failed')
+                                }
+                                    postCleanup()
                                 }
                             }
                         }
@@ -673,12 +548,6 @@ pipeline {
                             post {
                                 always {
                                     script {
-
-                                        lib.jenkins.Messages.new(this).add(
-                                            "${STAGE_NAME}",
-                                            lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
-                                        )
-
                                         postCleanup()
                                     }
                                 }
@@ -686,77 +555,77 @@ pipeline {
                         }
                     }
                 }
-                stage('build-and-test-windows-x64-zip') {
-                    when {
-                        beforeAgent true
-                        expression {
-                            params.BUILD_PLATFORM.contains('windows')
-                        }
-                    }
-                    agent {
-                        docker {
-                            label AGENT_WINDOWS_X64
-                            image IMAGE_WINDOWS_ZIP
-                            registryUrl 'https://public.ecr.aws/'
-                            alwaysPull true
-                        }
-                    }
-                    steps {
-                        script {
-                            echo("Switching to Java ${env.javaVersionNumber} on Windows Docker Container")
-                            sh("scoop reset `scoop list jdk | cut -d ' ' -f1 | grep ${env.javaVersionNumber} | head -1`")
-                            def buildManifestObj = buildAssembleUpload(
-                                componentName: "${COMPONENT_NAME}",
-                                inputManifest: "manifests/${INPUT_MANIFEST}",
-                                platform: 'windows',
-                                architecture: 'x64',
-                                distribution: 'zip',
-                                continueOnError: params.CONTINUE_ON_ERROR
-                            )
-                            String buildManifestUrl = buildManifestObj.getUrl(JOB_NAME, BUILD_NUMBER)
-                            String artifactUrl = buildManifestObj.getArtifactUrl(JOB_NAME, BUILD_NUMBER)
-                            env.ARTIFACT_URL_LINUX_WINDOWS_X64_ZIP = artifactUrl
-                            env.INDEX_FILE_PATH = buildManifestObj.getIndexFileRoot("${JOB_NAME}")
+                // stage('build-and-test-windows-x64-zip') {
+                //     when {
+                //         beforeAgent true
+                //         expression {
+                //             params.BUILD_PLATFORM.contains('windows')
+                //         }
+                //     }
+                //     agent {
+                //         docker {
+                //             label AGENT_WINDOWS_X64
+                //             image IMAGE_WINDOWS_ZIP
+                //             registryUrl 'https://public.ecr.aws/'
+                //             alwaysPull true
+                //         }
+                //     }
+                //     steps {
+                //         script {
+                //             echo("Switching to Java ${env.javaVersionNumber} on Windows Docker Container")
+                //             sh("scoop reset `scoop list jdk | cut -d ' ' -f1 | grep ${env.javaVersionNumber} | head -1`")
+                //             def buildManifestObj = buildAssembleUpload(
+                //                 componentName: "${COMPONENT_NAME}",
+                //                 inputManifest: "manifests/${INPUT_MANIFEST}",
+                //                 platform: 'windows',
+                //                 architecture: 'x64',
+                //                 distribution: 'zip',
+                //                 continueOnError: params.CONTINUE_ON_ERROR
+                //             )
+                //             String buildManifestUrl = buildManifestObj.getUrl(JOB_NAME, BUILD_NUMBER)
+                //             String artifactUrl = buildManifestObj.getArtifactUrl(JOB_NAME, BUILD_NUMBER)
+                //             env.ARTIFACT_URL_LINUX_WINDOWS_X64_ZIP = artifactUrl
+                //             env.INDEX_FILE_PATH = buildManifestObj.getIndexFileRoot("${JOB_NAME}")
 
-                            echo "buildManifestUrl (windows, x64, zip): ${buildManifestUrl}"
-                            echo "artifactUrl (windows, x64, zip): ${artifactUrl}"
-                        }
-                    }
-                    post {
-                        always {
-                            script {
-                                lib.jenkins.Messages.new(this).add(
-                                    "${STAGE_NAME}",
-                                    lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
-                                )
+                //             echo "buildManifestUrl (windows, x64, zip): ${buildManifestUrl}"
+                //             echo "artifactUrl (windows, x64, zip): ${artifactUrl}"
+                //         }
+                //     }
+                //     post {
+                //         always {
+                //             script {
+                //                 lib.jenkins.Messages.new(this).add(
+                //                     "${STAGE_NAME}",
+                //                     lib.jenkins.Messages.new(this).get(["${STAGE_NAME}"])
+                //                 )
 
-                                postCleanup()
-                            }
-                        }
-                    }
-                }
+                //                 postCleanup()
+                //             }
+                //         }
+                //     }
+                // }
             }
         }
-        stage('update index file') {
-            agent {
-                docker {
-                    label AGENT_LINUX_X64
-                    image dockerAgent.image
-                    args dockerAgent.args
-                    registryUrl 'https://public.ecr.aws/'
-                    alwaysPull true
-                }
-            }
-            steps {
-                script {
-                    if (params.UPDATE_LATEST_URL) {
-                        uploadIndexFile(
-                            indexFilePath: env.INDEX_FILE_PATH
-                        )
-                    }
-                }
-            }
-        }
+        // stage('update index file') {
+        //     agent {
+        //         docker {
+        //             label AGENT_LINUX_X64
+        //             image dockerAgent.image
+        //             args dockerAgent.args
+        //             registryUrl 'https://public.ecr.aws/'
+        //             alwaysPull true
+        //         }
+        //     }
+        //     steps {
+        //         script {
+        //             if (params.UPDATE_LATEST_URL) {
+        //                 uploadIndexFile(
+        //                     indexFilePath: env.INDEX_FILE_PATH
+        //                 )
+        //             }
+        //         }
+        //     }
+        // }
         stage('docker build') {
             when {
                 beforeAgent true
@@ -799,17 +668,6 @@ pipeline {
             node(AGENT_LINUX_X64) {
                 checkout scm
                 script {
-                    closeBuildSuccessGithubIssue(
-                        message: buildMessage(search: 'Successfully built'),
-                        search: 'Successfully built',
-                        inputManifestPath: "manifests/$INPUT_MANIFEST"
-                    )
-                    if (params.CREATE_GITHUB_ISSUE) {
-                        createBuildFailureGithubIssue(
-                            message: buildMessage(search: 'Error building'),
-                            inputManifestPath: "manifests/$INPUT_MANIFEST"
-                        )
-                    }
                     postCleanup()
                 }
             }
@@ -817,32 +675,6 @@ pipeline {
         success {
             node(AGENT_LINUX_X64) {
                 script {
-                    List<String> stages = []
-                    if (params.BUILD_PLATFORM.contains('linux')) {
-                        stages = [
-                            'build-and-test-linux-x64-tar',
-                            'assemble-archive-and-test-linux-x64-rpm',
-                            'assemble-archive-and-test-linux-x64-deb',
-                            'build-and-test-linux-arm64-tar',
-                            'assemble-archive-and-test-linux-arm64-rpm',
-                            'assemble-archive-and-test-linux-arm64-deb',
-                        ]
-                    }
-                    if (params.BUILD_PLATFORM.contains('windows')) {
-                        stages.add('build-and-test-windows-x64-zip')
-                    }
-
-                    if (params.PUBLISH_NOTIFICATION) {
-                        def stashed = lib.jenkins.Messages.new(this).get(stages)
-
-                        publishNotification(
-                            icon: ':white_check_mark:',
-                            message: 'Successful Build',
-                            extra: stashed,
-                            credentialsId: 'jenkins-build-notice-webhook',
-                            manifest: "${INPUT_MANIFEST}"
-                        )
-                    }
                     postCleanup()
                 }
             }
@@ -851,14 +683,6 @@ pipeline {
             node(AGENT_LINUX_X64) {
                 checkout scm
                 script {
-                    if (params.PUBLISH_NOTIFICATION) {
-                        publishNotification(
-                            icon: ':warning:',
-                            message: buildMessage(search: 'Error building'),
-                            credentialsId: 'jenkins-build-notice-webhook',
-                            manifest: "${INPUT_MANIFEST}"
-                        )
-                    }
                     postCleanup()
                 }
             }
