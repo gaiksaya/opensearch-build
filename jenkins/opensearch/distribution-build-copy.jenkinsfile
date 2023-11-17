@@ -53,6 +53,48 @@ pipeline {
         }
         stage('build') {
             parallel {
+                // stage('build-and-test-linux-x64-tar') {
+                //     agent {
+                //         docker {
+                //             label AGENT_LINUX_X64
+                //             image dockerAgent.image
+                //             args dockerAgent.args
+                //             registryUrl 'https://public.ecr.aws/'
+                //             alwaysPull true
+                //         }
+                //     }
+                //     steps {
+                //         script {
+                //             // echo "ERROR: Some error"
+                //             // echo "Failed plugins are PA, Blah"
+                //             // writeFile(file: 'project.rules', text:
+                //             // '''
+                //             // warning /Failed plugins/
+                //             // ''')
+                //             //     def logs = step([$class: 'LogParserPublisher',
+                //             //         unstableOnWarning: true,
+                //             //         failBuildOnError: true,
+                //             //         projectRulePath: 'project.rules',
+                //             //         useProjectRule: true])
+                //             //     println(logs)
+                //             def logs = sh( returnStdout: true, script: "./build.sh manifests/${INPUT_MANIFEST} --component OpenSearch performance-analyzer --platform linux -a x64 -d tar --continue-on-error")
+                //             String[] parsed = logs.split('\n')
+                //             // println('Here are parsed logs: '+ parsed)
+                //             if (parsed.any{e -> e.contains('Failed plugins are')}){
+                //                 unstable('Plugins failed')
+                //             } else {
+                //                 println('Alas!')
+                //             }
+                //         }
+                //     }
+                //     post {
+                //         always {
+                //             script {
+                //                 postCleanup()
+                //             }
+                //         }
+                //     }
+                // }
                 stage('build-and-test-linux-x64-tar') {
                     agent {
                         docker {
@@ -65,31 +107,27 @@ pipeline {
                     }
                     steps {
                         script {
-                            // echo "ERROR: Some error"
-                            // echo "Failed plugins are PA, Blah"
-                            // writeFile(file: 'project.rules', text:
-                            // '''
-                            // warning /Failed plugins/
-                            // ''')
-                            //     def logs = step([$class: 'LogParserPublisher',
-                            //         unstableOnWarning: true,
-                            //         failBuildOnError: true,
-                            //         projectRulePath: 'project.rules',
-                            //         useProjectRule: true])
-                            //     println(logs)
-                            def logs = sh( returnStdout: true, script: "./build.sh manifests/${INPUT_MANIFEST} --component OpenSearch performance-analyzer --platform linux -a x64 -d tar --continue-on-error")
-                            String[] parsed = logs.split('\n')
-                            // println('Here are parsed logs: '+ parsed)
-                            if (parsed.any{e -> e.contains('Failed plugins are')}){
-                                unstable('Plugins failed')
-                            } else {
-                                println('Alas!')
-                            }
+                            def buildManifestObj = buildAssembleUpload(
+                                componentName: "${COMPONENT_NAME}",
+                                inputManifest: "manifests/${INPUT_MANIFEST}",
+                                platform: 'linux',
+                                architecture: 'x64',
+                                distribution: 'tar',
+                                continueOnError: true
+                            )
+                            String buildManifestUrl = buildManifestObj.getUrl(JOB_NAME, BUILD_NUMBER)
+                            String artifactUrl = buildManifestObj.getArtifactUrl(JOB_NAME, BUILD_NUMBER)
                         }
                     }
                     post {
                         always {
                             script {
+                                def stageLogs = logParserForStage('build-and-test-linux-x64-tar')
+                                if (stageLogs.any{e -> e.contains('Failed plugins are')}){
+                                    unstable('Plugins failed')
+                                } else {
+                                    println('Alas!')
+                                }
                                 postCleanup()
                             }
                         }
