@@ -224,7 +224,7 @@ pipeline {
                             post {
                                 always {
                                     script {
-                                        def stageLogs = logParserForStage(stageName: 'build-and-test-linux-x64-rpm')
+                                        def stageLogs = logParserForStage(stageName: 'build-archive-linux-x64-rpm')
                                         if (stageLogs.any{e -> e.contains('Failed plugins are')}){
                                             unstable('Plugins failed')
                                         }
@@ -309,7 +309,7 @@ pipeline {
                             post {
                                 always {
                                     script {
-                                        def stageLogs = logParserForStage(stageName: 'build-and-test-linux-x64-deb')
+                                        def stageLogs = logParserForStage(stageName: 'build-archive-linux-x64-deb')
                                         if (stageLogs.any{e -> e.contains('Failed plugins are')}){
                                             unstable('Plugins failed')
                                         }
@@ -436,7 +436,7 @@ pipeline {
                             post {
                                 always {
                                     script {
-                                        def stageLogs = logParserForStage(stageName: 'build-and-test-linux-arm64-rpm')
+                                        def stageLogs = logParserForStage(stageName: 'build-archive-linux-arm64-rpm')
                                         if (stageLogs.any{e -> e.contains('Failed plugins are')}){
                                             unstable('Plugins failed')
                                         }
@@ -515,7 +515,7 @@ pipeline {
                             post {
                                 always {
                                     script {
-                                        def stageLogs = logParserForStage(stageName: 'build-and-test-linux-arm64-deb')
+                                        def stageLogs = logParserForStage(stageName: 'build-archive-linux-arm64-deb')
                                         if (stageLogs.any{e -> e.contains('Failed plugins are')}){
                                             unstable('Plugins failed')
                                         }
