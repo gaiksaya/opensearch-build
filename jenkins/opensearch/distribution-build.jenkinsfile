@@ -223,11 +223,14 @@ pipeline {
                             }
                             post {
                                 always {
-                                def stageLogs = logParserForStage(stageName: 'build-and-test-linux-x64-rpm')
-                                if (stageLogs.any{e -> e.contains('Failed plugins are')}){
-                                    unstable('Plugins failed')
-                                }
-                                    postCleanup()
+                                    script {
+                                        def stageLogs = logParserForStage(stageName: 'build-and-test-linux-x64-rpm')
+                                        if (stageLogs.any{e -> e.contains('Failed plugins are')}){
+                                            unstable('Plugins failed')
+                                        }
+                                            postCleanup()
+                                    }
+
                                 }
                             }
                         }
@@ -305,11 +308,13 @@ pipeline {
                             }
                             post {
                                 always {
-                                def stageLogs = logParserForStage(stageName: 'build-and-test-linux-x64-deb')
-                                if (stageLogs.any{e -> e.contains('Failed plugins are')}){
-                                    unstable('Plugins failed')
-                                }
-                                    postCleanup()
+                                    script {
+                                        def stageLogs = logParserForStage(stageName: 'build-and-test-linux-x64-deb')
+                                        if (stageLogs.any{e -> e.contains('Failed plugins are')}){
+                                            unstable('Plugins failed')
+                                        }
+                                        postCleanup()
+                                    }
                                 }
                             }
                         }
@@ -430,11 +435,13 @@ pipeline {
                             }
                             post {
                                 always {
-                                def stageLogs = logParserForStage(stageName: 'build-and-test-linux-arm64-rpm')
-                                if (stageLogs.any{e -> e.contains('Failed plugins are')}){
-                                    unstable('Plugins failed')
-                                }
-                                    postCleanup()
+                                    script {
+                                        def stageLogs = logParserForStage(stageName: 'build-and-test-linux-arm64-rpm')
+                                        if (stageLogs.any{e -> e.contains('Failed plugins are')}){
+                                            unstable('Plugins failed')
+                                        }
+                                        postCleanup()
+                                    }
                                 }
                             }
                         }
@@ -507,11 +514,13 @@ pipeline {
                             }
                             post {
                                 always {
-                                def stageLogs = logParserForStage(stageName: 'build-and-test-linux-arm64-deb')
-                                if (stageLogs.any{e -> e.contains('Failed plugins are')}){
-                                    unstable('Plugins failed')
-                                }
-                                    postCleanup()
+                                    script {
+                                        def stageLogs = logParserForStage(stageName: 'build-and-test-linux-arm64-deb')
+                                        if (stageLogs.any{e -> e.contains('Failed plugins are')}){
+                                            unstable('Plugins failed')
+                                        }
+                                        postCleanup()
+                                    }
                                 }
                             }
                         }
