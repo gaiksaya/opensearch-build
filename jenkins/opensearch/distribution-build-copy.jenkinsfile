@@ -81,7 +81,7 @@ pipeline {
                             String[] parsed = logs.split('\n')
                             // println('Here are parsed logs: '+ parsed)
                             if (parsed.any{e -> e.contains('Failed plugins are')}){
-                                warnError('Plugins failed')
+                                unstable('Plugins failed')
                             } else {
                                 println('Alas!')
                             }
