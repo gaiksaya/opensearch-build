@@ -133,6 +133,51 @@ pipeline {
                         }
                     }
                 }
+                stage('build-and-test-linux-arm64-tar') {
+                    when {
+                        beforeAgent true
+                        expression {
+                            params.BUILD_PLATFORM.contains('linux')
+                        }
+                    }
+                    agent {
+                        docker {
+                            label AGENT_LINUX_ARM64
+                            image dockerAgent.image
+                            args dockerAgent.args
+                            registryUrl 'https://public.ecr.aws/'
+                            alwaysPull true
+                        }
+                    }
+                    steps {
+                        script {
+                            def buildManifestObj = buildAssembleUpload(
+                                componentName: "OpenSearch common-utils",
+                                inputManifest: "manifests/${INPUT_MANIFEST}",
+                                platform: 'linux',
+                                architecture: 'arm64',
+                                distribution: 'tar',
+                                continueOnError: params.CONTINUE_ON_ERROR
+                            )
+                            String buildManifestUrl = buildManifestObj.getUrl(JOB_NAME, BUILD_NUMBER)
+                            String artifactUrl = buildManifestObj.getArtifactUrl(JOB_NAME, BUILD_NUMBER)
+                            env.ARTIFACT_URL_LINUX_ARM64_TAR = artifactUrl
+                        }
+                    }
+                    post {
+                        always {
+                            script {
+                                def stageLogs = logParserForStage(stageName: 'build-and-test-linux-arm64-tar')
+                                if (stageLogs.any{e -> e.contains('Failed plugins are')}){
+                                    unstable('Plugins failed')
+                                } else {
+                                    println('Alas!')
+                                }
+                                postCleanup()
+                            }
+                        }
+                    }
+                }
             }
         }
     }
