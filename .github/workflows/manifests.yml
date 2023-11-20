@@ -28,7 +28,8 @@ jobs:
         id: set-matrix
         run: | 
           echo "matrix=${{ steps.list-changed-manifests.outputs.all_changed_files }}" >> "$GITHUB_OUTPUT"
-          echo ${{ steps.set-matrix.outputs.matrix }}
+          echo `${{ steps.set-matrix.outputs.matrix }} | awk -F/ '{if($2<2)print$0}' | jq -R -s -c 'split("\n")[:-1]')`
+          echo `${{ steps.set-matrix.outputs.matrix }} | awk -F/ '{if($2>2)print$0}' | jq -R -s -c 'split("\n")[:-1]')`
 
   # manifest-checks-jdk11:
   #   needs: [list-changed-manifests]
