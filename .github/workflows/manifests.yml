@@ -20,9 +20,10 @@ jobs:
         id: list-changed-manifests
         with:
           files: manifests/**/opensearch*.yml
-          json: true
+          # json: true
           quotepath: false
           dir_names: false
+          escape_json: false
 
       - name: Set unique changed manifests as matrix
         id: set-matrix
