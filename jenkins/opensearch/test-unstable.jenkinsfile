@@ -49,7 +49,7 @@ pipeline {
                 }
             }
         }
-        stage('Build OpenSearch-min Snapshots') {
+        // stage('Build OpenSearch-min Snapshots') {
                 // stage('linux-arm64-tar') {
                 //     agent {
                 //         docker {
@@ -127,7 +127,7 @@ pipeline {
                         }
                     }
                 }
-        }
+        // }
     }
 }
 
