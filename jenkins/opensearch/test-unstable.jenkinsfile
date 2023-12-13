@@ -77,32 +77,32 @@ pipeline {
                         }
                     }
                 }
-                stage('linux-arm64-tar') {
-                    agent {
-                        docker {
-                            label AGENT_LINUX_ARM64
-                            image dockerAgent.image
-                            args dockerAgent.args
-                            registryUrl 'https://public.ecr.aws/'
-                            alwaysPull true
-                        }
-                    }
-                    steps {
-                        script {
-                            echo("Oh look this stage does not Failed plugins are!")
-                        }
-                    }
-                    post {
-                        success {
-                            script {
-                                markStageUnstableIfPluginsFailedToBuild()
-                            }
-                        }
-                        always {
-                            postCleanup()
-                        }
-                    }
-                }
+                // stage('linux-arm64-tar') {
+                //     agent {
+                //         docker {
+                //             label AGENT_LINUX_ARM64
+                //             image dockerAgent.image
+                //             args dockerAgent.args
+                //             registryUrl 'https://public.ecr.aws/'
+                //             alwaysPull true
+                //         }
+                //     }
+                //     steps {
+                //         script {
+                //             echo("Oh look this stage does not Failed plugins are!")
+                //         }
+                //     }
+                //     post {
+                //         success {
+                //             script {
+                //                 markStageUnstableIfPluginsFailedToBuild()
+                //             }
+                //         }
+                //         always {
+                //             postCleanup()
+                //         }
+                //     }
+                // }
                 stage('windows-x64-zip') {
                     agent {
                         docker {
