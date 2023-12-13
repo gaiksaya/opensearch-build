@@ -51,32 +51,32 @@ pipeline {
         }
         stage('Build OpenSearch-min Snapshots') {
             parallel {
-                stage('linux-x64-tar') {
-                    agent {
-                        docker {
-                            label AGENT_LINUX_X64
-                            image dockerAgent.image
-                            args dockerAgent.args
-                            registryUrl 'https://public.ecr.aws/'
-                            alwaysPull true
-                        }
-                    }
-                    steps {
-                        script {
-                            echo("Oh look this stage has Failed plugins are")
-                        }
-                    }
-                    post {
-                        success {
-                            script {
-                                markStageUnstableIfPluginsFailedToBuild()
-                            }
-                        }
-                        always {
-                            postCleanup()
-                        }
-                    }
-                }
+                // stage('linux-x64-tar') {
+                //     agent {
+                //         docker {
+                //             label AGENT_LINUX_X64
+                //             image dockerAgent.image
+                //             args dockerAgent.args
+                //             registryUrl 'https://public.ecr.aws/'
+                //             alwaysPull true
+                //         }
+                //     }
+                //     steps {
+                //         script {
+                //             echo("Oh look this stage has Failed plugins are")
+                //         }
+                //     }
+                //     post {
+                //         success {
+                //             script {
+                //                 markStageUnstableIfPluginsFailedToBuild()
+                //             }
+                //         }
+                //         always {
+                //             postCleanup()
+                //         }
+                //     }
+                // }
                 // stage('linux-arm64-tar') {
                 //     agent {
                 //         docker {
