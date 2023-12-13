@@ -89,7 +89,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            echo("Oh look this stage does not!")
+                            echo("Oh look this stage does not Failed plugins are!")
                         }
                     }
                     post {
