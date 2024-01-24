@@ -180,7 +180,9 @@ pipeline {
                             echo "artifactUrl (linux, x64, tar): ${artifactUrl}"
 
                             parallel([
-                                triggerIntegrationTests(buildManifestUrl),
+                                'integ-test': {
+                                    triggerIntegrationTests(buildManifestUrl)
+                                },
                                 'bwc-test': {
                                     Boolean skipBwcTests = (BWC_TEST_JOB_NAME == '' || TEST_MANIFEST == '' || buildManifestUrl == '')
                                     echo "${skipBwcTests ? 'Skipping BWC tests as one of the values has empty string: BWC_TEST_JOB_NAME, TEST_MANIFEST, buildManifestUrl' : 'Running BWC tests'}"
@@ -194,11 +196,11 @@ pipeline {
                                                 string(name: 'BUILD_MANIFEST_URL', value: buildManifestUrl),
                                                 string(name: 'AGENT_LABEL', value: AGENT_LINUX_X64)
                                             ]
-                                        }
                                     }
-                                ])
-                            }
+                                }
+                            ])
                         }
+                    }
                     post {
                         success {
                             script {
@@ -270,7 +272,7 @@ pipeline {
                                         if (params.CONTINUE_ON_ERROR) {
                                             markStageUnstableIfPluginsFailedToBuild()
                                         }
-                                        postCleanup()
+                                        postCleanup()                                      
                                     }
                                 }
                             }
@@ -304,10 +306,16 @@ pipeline {
                                     echo "artifactUrl (linux, x64, rpm): ${artifactUrl}"
 
                                     String bundleManifestUrl = buildManifestObj.getBundleManifestUrl(JOB_NAME, BUILD_NUMBER)
-                                    parallel([
-                                        triggerIntegrationTests(buildManifestUrl),
-                                        triggerRpmValidation(bundleManifestUrl)
-                                    ])
+
+                                    echo "Trigger rpm validation for linux x64 rpm ${bundleManifestUrl}"
+                                    def rpmValidationResults =
+                                        build job: 'rpm-validation',
+                                        propagate: false,
+                                        wait: false,
+                                        parameters: [
+                                            string(name: 'BUNDLE_MANIFEST_URL', value: bundleManifestUrl),
+                                            string(name: 'AGENT_LABEL', value: AGENT_LINUX_X64)
+                                        ]
                                 }
                             }
                             post {
@@ -380,7 +388,7 @@ pipeline {
                                         if (params.CONTINUE_ON_ERROR) {
                                             markStageUnstableIfPluginsFailedToBuild()
                                         }
-                                        postCleanup()
+                                        postCleanup()                                      
                                     }
                                 }
                             }
@@ -414,7 +422,6 @@ pipeline {
                                     echo "artifactUrl (linux, x64, deb): ${artifactUrl}"
 
                                     String bundleManifestUrl = buildManifestObj.getBundleManifestUrl(JOB_NAME, BUILD_NUMBER)
-                                    triggerIntegrationTests(buildManifestUrl)
                                 }
                             }
                             post {
@@ -484,6 +491,7 @@ pipeline {
                             echo "buildManifestUrl (linux, arm64, tar): ${buildManifestUrl}"
                             echo "artifactUrl (linux, arm64, tar): ${artifactUrl}"
                             triggerIntegrationTests(buildManifestUrl)
+                                
                         }
                     }
                     post {
@@ -591,10 +599,16 @@ pipeline {
                                     echo "artifactUrl (linux, arm64, rpm): ${artifactUrl}"
 
                                     String bundleManifestUrl = buildManifestObj.getBundleManifestUrl(JOB_NAME, BUILD_NUMBER)
-                                    parallel([
-                                        triggerIntegrationTests(buildManifestUrl),
-                                        triggerRpmValidation(bundleManifestUrl)
-                                    ])
+
+                                    echo "Trigger rpm validation for linux arm64 rpm ${bundleManifestUrl}"
+                                    def rpmValidationResults =
+                                        build job: 'rpm-validation',
+                                        propagate: false,
+                                        wait: false,
+                                        parameters: [
+                                            string(name: 'BUNDLE_MANIFEST_URL', value: bundleManifestUrl),
+                                            string(name: 'AGENT_LABEL', value: AGENT_LINUX_ARM64)
+                                        ]
                                 }
                             }
                             post {
@@ -701,7 +715,6 @@ pipeline {
                                     echo "artifactUrl (linux, arm64, deb): ${artifactUrl}"
 
                                     String bundleManifestUrl = buildManifestObj.getBundleManifestUrl(JOB_NAME, BUILD_NUMBER)
-                                    triggerIntegrationTests(buildManifestUrl)
                                 }
                             }
                             post {
@@ -770,7 +783,6 @@ pipeline {
 
                             echo "buildManifestUrl (windows, x64, zip): ${buildManifestUrl}"
                             echo "artifactUrl (windows, x64, zip): ${artifactUrl}"
-                            triggerIntegrationTests(buildManifestUrl)
                         }
                     }
                     post {
@@ -805,9 +817,9 @@ pipeline {
                             }
                         }
                     }
-                    }
                 }
             }
+        }
         stage('docker build') {
             when {
                 beforeAgent true
@@ -921,8 +933,8 @@ def markStageUnstableIfPluginsFailedToBuild() {
     def stageLogs = getLogsForStage(stageName: "${STAGE_NAME}")
     if (stageLogs.any{e -> e.contains('Failed plugins are')}) {
         unstable('Some plugins failed to build. See the ./build.sh step for logs and more details')
-        }
     }
+}
 
 def triggerIntegrationTests(String buildManifestUrl) {
         Boolean skipIntegTests = (INTEG_TEST_JOB_NAME == '' || TEST_MANIFEST == '' || buildManifestUrl == '')
@@ -938,16 +950,4 @@ def triggerIntegrationTests(String buildManifestUrl) {
                     booleanParam(name: 'UPDATE_GITHUB_ISSUES', value: true)
                 ]
         }
-}
-
-def triggerRpmValidation(String bundleManifestUrl) {
-        echo "Triggering RPM validation for ${bundleManifestUrl}"
-        def rpmValidationResults =
-            build job: 'rpm-validation',
-            propagate: false,
-            wait: false,
-            parameters: [
-                string(name: 'BUNDLE_MANIFEST_URL', value: bundleManifestUrl),
-                string(name: 'AGENT_LABEL', value: AGENT_LINUX_X64)
-            ]
 }
