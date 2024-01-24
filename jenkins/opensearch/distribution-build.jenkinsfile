@@ -703,6 +703,7 @@ pipeline {
                                     String bundleManifestUrl = buildManifestObj.getBundleManifestUrl(JOB_NAME, BUILD_NUMBER)
                                     triggerIntegrationTests(buildManifestUrl)
                                 }
+                            }
                             post {
                                 success {
                                     script {
@@ -731,7 +732,6 @@ pipeline {
                                         postCleanup()
                                     }
                                 }
-                            }
                             }
                         }
                     }
@@ -807,7 +807,7 @@ pipeline {
                     }
                     }
                 }
-                }
+            }
         stage('docker build') {
             when {
                 beforeAgent true
@@ -844,7 +844,7 @@ pipeline {
                 }
             }
         }
-        }
+    }
     post {
         always {
             node(AGENT_LINUX_X64) {
