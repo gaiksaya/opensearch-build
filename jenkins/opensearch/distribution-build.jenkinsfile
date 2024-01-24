@@ -180,7 +180,7 @@ pipeline {
                             echo "artifactUrl (linux, x64, tar): ${artifactUrl}"
 
                             parallel([
-                                triggerIntegrationTests(buildManifestUrl)
+                                triggerIntegrationTests(buildManifestUrl),
                                 'bwc-test': {
                                     Boolean skipBwcTests = (BWC_TEST_JOB_NAME == '' || TEST_MANIFEST == '' || buildManifestUrl == '')
                                     echo "${skipBwcTests ? 'Skipping BWC tests as one of the values has empty string: BWC_TEST_JOB_NAME, TEST_MANIFEST, buildManifestUrl' : 'Running BWC tests'}"
@@ -194,11 +194,11 @@ pipeline {
                                                 string(name: 'BUILD_MANIFEST_URL', value: buildManifestUrl),
                                                 string(name: 'AGENT_LABEL', value: AGENT_LINUX_X64)
                                             ]
+                                        }
                                     }
-                                }
-                            ])
+                                ])
+                            }
                         }
-                    }
                     post {
                         success {
                             script {
@@ -305,7 +305,7 @@ pipeline {
 
                                     String bundleManifestUrl = buildManifestObj.getBundleManifestUrl(JOB_NAME, BUILD_NUMBER)
                                     parallel([
-                                        triggerIntegrationTests(buildManifestUrl)
+                                        triggerIntegrationTests(buildManifestUrl),
                                         triggerRpmValidation(bundleManifestUrl)
                                     ])
                                 }
@@ -592,7 +592,7 @@ pipeline {
 
                                     String bundleManifestUrl = buildManifestObj.getBundleManifestUrl(JOB_NAME, BUILD_NUMBER)
                                     parallel([
-                                        triggerIntegrationTests(buildManifestUrl)
+                                        triggerIntegrationTests(buildManifestUrl),
                                         triggerRpmValidation(bundleManifestUrl)
                                     ])
                                 }
