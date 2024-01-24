@@ -380,7 +380,7 @@ pipeline {
                                         if (params.CONTINUE_ON_ERROR) {
                                             markStageUnstableIfPluginsFailedToBuild()
                                         }
-                                        postCleanup()                                      
+                                        postCleanup()
                                     }
                                 }
                             }
@@ -735,6 +735,7 @@ pipeline {
                             }
                         }
                     }
+                }
                 stage('build-and-test-windows-x64-zip') {
                     when {
                         beforeAgent true
@@ -771,6 +772,7 @@ pipeline {
                             echo "artifactUrl (windows, x64, zip): ${artifactUrl}"
                             triggerIntegrationTests(buildManifestUrl)
                         }
+                    }
                     post {
                         success {
                             script {
@@ -842,7 +844,7 @@ pipeline {
                 }
             }
         }
-            }
+        }
     post {
         always {
             node(AGENT_LINUX_X64) {
@@ -913,7 +915,7 @@ pipeline {
             }
         }
     }
-        }
+}
 
 def markStageUnstableIfPluginsFailedToBuild() {
     def stageLogs = getLogsForStage(stageName: "${STAGE_NAME}")
