@@ -42,6 +42,18 @@ pipeline {
             description: 'Test manifest under the manifests folder, e.g. 2.0.0/opensearch-dashboards-2.0.0-test.yml.',
             trim: true
         )
+        string(
+            name: 'INTEG_TEST_JOB_NAME',
+            description: "Name of integration test job that will be triggered, e.g. Playground/integ-test-opensearch-dashboards.  A non-null empty value here will skip integration tests.",
+            defaultValue: "integ-test-opensearch-dashboards",
+            trim: true
+        )
+        string(
+            name: 'BWC_TEST_JOB_NAME',
+            description: "Name of backwards compatibility test job that will be triggered, e.g. Playground/bwc-test-opensearch-dashboards.  A non-null empty value here will skip BWC tests.",
+            defaultValue: "bwc-test-opensearch-dashboards",
+            trim: true
+        )
         string( // Note: need to update 'verify-parameters' entries if you add new platform(s)
             name: 'BUILD_PLATFORM',
             description: "Build selected platform related artifacts, choices include 'linux windows'. Can combine multiple platforms with space in between (docker is only available on linux)",
@@ -1024,7 +1036,7 @@ def triggerIntegrationTests(String buildManifestUrl, String buildManifestUrlOpen
     echo "${skipIntegTests ? 'Skipping integration tests as one of the values has empty string: TEST_MANIFEST, buildManifestUrl, buildManifestUrlOpenSearch' : 'Running integration tests'}"
     if (!skipIntegTests) {
         def integTestResults =
-                build job: 'integ-test-opensearch-dashboards',
+                build job: INTEG_TEST_JOB_NAME,
                 propagate: false,
                 wait: false,
                 parameters: [
@@ -1041,7 +1053,7 @@ def triggerBWCTests(String buildManifestUrl) {
     echo "${skipBwcTests ? 'Skipping BWC tests as one of the values has empty string: TEST_MANIFEST, buildManifestUrl' : 'Running BWC tests'}"
     if (!skipBwcTests) {
         def bwcTestResults =
-                build job: 'bwc-test-opensearch-dashboards',
+                build job: BWC_TEST_JOB_NAME,
                 propagate: false,
                 wait: false,
                 parameters: [
