@@ -99,9 +99,12 @@ pipeline {
                     env.platform = buildManifestObj.build.platform
                     env.artifactPath = buildManifestObj.getArtifactRoot(BUILD_JOB_NAME, buildId)
                     env.AGENT_LABEL = agent_nodes["${env.platform}_${architecture}"]
-                    Boolean isTar = (env.distribution == 'tar')
-                    Boolean env.updateGithubIssues = (UPDATE_GITHUB_ISSUES && isTar)
-                    echo "UPDATE_GITHUB_ISSUES is ${UPDATE_GITHUB_ISSUES}, isTar ${isTar}, env.updateGithubIssues is ${env.updateGithubIssues}"
+                    env.updateGithubIssues = false
+                    if (UPDATE_GITHUB_ISSUES == true && env.distribution == 'tar'){
+                        env.updateGithubIssues = true
+                    }
+                    env.updateGithubIssues = (UPDATE_GITHUB_ISSUES && isTar)
+                    echo "UPDATE_GITHUB_ISSUES is ${UPDATE_GITHUB_ISSUES}, env.updateGithubIssues is ${env.updateGithubIssues}"
                 }
             }
             post {
