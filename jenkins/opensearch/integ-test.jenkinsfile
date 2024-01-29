@@ -103,7 +103,6 @@ pipeline {
                     if (UPDATE_GITHUB_ISSUES == true && env.distribution == 'tar'){
                         env.updateGithubIssues = true
                     }
-                    env.updateGithubIssues = (UPDATE_GITHUB_ISSUES && isTar)
                     echo "UPDATE_GITHUB_ISSUES is ${UPDATE_GITHUB_ISSUES}, env.updateGithubIssues is ${env.updateGithubIssues}"
                 }
             }
