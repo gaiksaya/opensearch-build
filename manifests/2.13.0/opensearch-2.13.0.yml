@@ -121,7 +121,7 @@ components:
       - common-utils
   - name: anomaly-detection
     repository: https://github.com/opensearch-project/anomaly-detection.git
-    ref: aecf6d7afbb1982ee4189ecfab405303ec41d586
+    ref: 68b350624db92ce494eb09416d5b3803fe4b9fe9
     platforms:
       - linux
       - windows
@@ -166,7 +166,7 @@ components:
       - windows
   - name: flow-framework
     repository: https://github.com/opensearch-project/flow-framework.git
-    ref: 0f9ededf28c45ec5f12b67ee4112c42c30152974
+    ref: 7e363e5173ebc91f0204c1461ed55e0e5abc10e4
     platforms:
       - linux
       - windows
