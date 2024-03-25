@@ -29,14 +29,13 @@ jobs:
 
 
   manifest-checks-jdk11:
-    needs: list-manifests11
+    needs: [list-changed-manifests]
     runs-on: ubuntu-latest
     env:
       PYTHON_VERSION: 3.9
       JDK_VERSION: 11
     strategy:
-      matrix:
-        manifest: ${{ fromJson(needs.list-manifests11.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.list-changed-manifests.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v3
       - name: Set Up JDK ${{ env.JDK_VERSION }}
@@ -55,14 +54,13 @@ jobs:
           ./ci.sh ${{ matrix.manifest }} --snapshot
 
   manifest-checks-jdk17:
-    needs: list-manifests17
+    needs: [list-changed-manifests]
     runs-on: ubuntu-latest
     env:
       PYTHON_VERSION: 3.9
       JDK_VERSION: 17
     strategy:
-      matrix:
-        manifest: ${{ fromJson(needs.list-manifests17.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.list-changed-manifests.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v3
       - name: Set Up JDK ${{ env.JDK_VERSION }}
