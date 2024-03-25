@@ -1,8 +1,9 @@
 ---
-name: manifests
+name: manifests-ci-check
 
 on:
   pull_request:
+    types: [ labeled ]
   paths:
     - 'manifests/**/*.yml'
     - '!manifests/templates/**/'
@@ -10,6 +11,7 @@ on:
 
 jobs:
   list-changed-manifests:
+    if: ${{ github.repository == 'opensearch-project/opensearch-build' && github.event.label.name == 'manifest-ci-check' }}
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
