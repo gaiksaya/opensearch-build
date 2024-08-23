@@ -37,6 +37,7 @@ class ValidateTar(Validation, DownloadUtils):
 
     def start_cluster(self) -> bool:
         try:
+            print('password is: ', get_password(str(self.args.version)))
             self.os_process.start(f'export OPENSEARCH_INITIAL_ADMIN_PASSWORD={get_password(str(self.args.version))} && ./opensearch-tar-install.sh >> install.log', os.path.join(self.tmp_dir.path, "opensearch"))
             if ("opensearch-dashboards" in self.args.projects):
                 self.osd_process.start(os.path.join(str(self.tmp_dir.path), "opensearch-dashboards", "bin", "opensearch-dashboards"), ".")
