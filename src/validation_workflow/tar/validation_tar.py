@@ -49,14 +49,15 @@ class ValidateTar(Validation, DownloadUtils):
         if self.check_cluster_readiness():
             test_result, counter = ApiTestCases().test_apis(self.args.version, self.args.projects,
                                                             self.check_for_security_plugin(os.path.join(self.tmp_dir.path, "opensearch")) if self.args.allow_http else True)
-            shutil.copy(os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), os.path.join('/tmp', 'opensearch.log'))
             if (test_result):
                 logging.info(f'All tests Pass : {counter}')
                 return True
             else:
+                shutil.copy(os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), os.path.join('/tmp', 'opensearch.log'))
                 self.cleanup()
                 raise Exception(f'Not all tests Pass : {counter}')
         else:
+            shutil.copy(os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), os.path.join('/tmp', 'opensearch.log'))
             self.cleanup()
             raise Exception("Cluster is not ready for API test")
 
