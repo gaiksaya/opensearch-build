@@ -37,7 +37,7 @@ class ValidateTar(Validation, DownloadUtils):
     def start_cluster(self) -> bool:
         try:
             self.os_process.start(f'export OPENSEARCH_INITIAL_ADMIN_PASSWORD={get_password(str(self.args.version))} && ./opensearch-tar-install.sh', os.path.join(self.tmp_dir.path, "opensearch"))
-            execute('cat '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), '.', True, False)
+            execute('cat '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), '.')
             if ("opensearch-dashboards" in self.args.projects):
                 self.osd_process.start(os.path.join(str(self.tmp_dir.path), "opensearch-dashboards", "bin", "opensearch-dashboards"), ".")
             logging.info('Started cluster')
@@ -46,7 +46,7 @@ class ValidateTar(Validation, DownloadUtils):
         return True
 
     def validation(self) -> bool:
-        execute('cat '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), '.', True, False)
+        execute('cat '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), '.')
         if self.check_cluster_readiness():
             test_result, counter = ApiTestCases().test_apis(self.args.version, self.args.projects,
                                                             self.check_for_security_plugin(os.path.join(self.tmp_dir.path, "opensearch")) if self.args.allow_http else True)
@@ -62,7 +62,7 @@ class ValidateTar(Validation, DownloadUtils):
 
     def cleanup(self) -> bool:
         try:
-            execute('cat '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), '.', True, False)
+            execute('cat '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), '.')
             self.os_process.terminate()
             if ("opensearch-dashboards" in self.args.projects):
                 self.osd_process.terminate()
