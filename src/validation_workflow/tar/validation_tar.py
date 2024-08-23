@@ -10,6 +10,7 @@ import os
 
 from system.execute import execute
 from system.process import Process
+import shutil.copy
 from system.temporary_directory import TemporaryDirectory
 from test_workflow.integ_test.utils import get_password
 from validation_workflow.api_test_cases import ApiTestCases
@@ -48,7 +49,7 @@ class ValidateTar(Validation, DownloadUtils):
         if self.check_cluster_readiness():
             test_result, counter = ApiTestCases().test_apis(self.args.version, self.args.projects,
                                                             self.check_for_security_plugin(os.path.join(self.tmp_dir.path, "opensearch")) if self.args.allow_http else True)
-            execute('ls '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs'), '.')
+            shutil.copy(os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), os.path.join('/tmp', 'opensearch.log'))
             if (test_result):
                 logging.info(f'All tests Pass : {counter}')
                 return True
@@ -61,7 +62,7 @@ class ValidateTar(Validation, DownloadUtils):
 
     def cleanup(self) -> bool:
         try:
-            execute('ls '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs'), '.')
+            shutil.copy(os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), os.path.join('/tmp', 'opensearch.log'))
             self.os_process.terminate()
             if ("opensearch-dashboards" in self.args.projects):
                 self.osd_process.terminate()
