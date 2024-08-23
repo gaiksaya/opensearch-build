@@ -37,7 +37,7 @@ class ValidateTar(Validation, DownloadUtils):
 
     def start_cluster(self) -> bool:
         try:
-            self.os_process.start(f'export OPENSEARCH_INITIAL_ADMIN_PASSWORD={get_password(str(self.args.version))} && ./opensearch-tar-install.sh', os.path.join(self.tmp_dir.path, "opensearch"))
+            self.os_process.start(f'export OPENSEARCH_INITIAL_ADMIN_PASSWORD={get_password(str(self.args.version))} && ./opensearch-tar-install.sh >> install.log', os.path.join(self.tmp_dir.path, "opensearch"))
             if ("opensearch-dashboards" in self.args.projects):
                 self.osd_process.start(os.path.join(str(self.tmp_dir.path), "opensearch-dashboards", "bin", "opensearch-dashboards"), ".")
             logging.info('Started cluster')
@@ -53,10 +53,12 @@ class ValidateTar(Validation, DownloadUtils):
                 logging.info(f'All tests Pass : {counter}')
                 return True
             else:
-                shutil.copy(os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), os.path.join('/tmp', 'opensearch.log'))
+                execute('cat ' + os.path.join(self.tmp_dir.path, 'opensearch', 'install.log'), ".")
+                # shutil.copy(os.path.join(self.tmp_dir.path, 'opensearch', 'install.log'), os.path.join('/tmp', 'opensearch.log'))
                 self.cleanup()
                 raise Exception(f'Not all tests Pass : {counter}')
         else:
+            execute('cat ' + os.path.join(self.tmp_dir.path, 'opensearch', 'install.log'), ".")
             shutil.copy(os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), os.path.join('/tmp', 'opensearch.log'))
             self.cleanup()
             raise Exception("Cluster is not ready for API test")
