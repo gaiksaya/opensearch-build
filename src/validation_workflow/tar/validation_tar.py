@@ -46,10 +46,10 @@ class ValidateTar(Validation, DownloadUtils):
         return True
 
     def validation(self) -> bool:
-        execute('cat '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), '.')
         if self.check_cluster_readiness():
             test_result, counter = ApiTestCases().test_apis(self.args.version, self.args.projects,
                                                             self.check_for_security_plugin(os.path.join(self.tmp_dir.path, "opensearch")) if self.args.allow_http else True)
+            execute('cat '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), '.')
             if (test_result):
                 logging.info(f'All tests Pass : {counter}')
                 return True
