@@ -59,13 +59,13 @@ class ValidateTar(Validation, DownloadUtils):
                 raise Exception(f'Not all tests Pass : {counter}')
         else:
             execute('cat ' + os.path.join(self.tmp_dir.path, 'opensearch', 'install.log'), ".")
-            shutil.copy(os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), os.path.join('/tmp', 'opensearch.log'))
+            shutil.copy(os.path.join(self.tmp_dir.path, 'opensearch', 'install.log'), os.path.join('/tmp', 'opensearch.log'))
             self.cleanup()
             raise Exception("Cluster is not ready for API test")
 
     def cleanup(self) -> bool:
         try:
-            shutil.copy(os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), os.path.join('/tmp', 'opensearch.log'))
+            shutil.copy(os.path.join(self.tmp_dir.path, 'opensearch', 'install.log'), os.path.join('/tmp', 'opensearch.log'))
             self.os_process.terminate()
             if ("opensearch-dashboards" in self.args.projects):
                 self.osd_process.terminate()
