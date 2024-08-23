@@ -48,7 +48,7 @@ class ValidateTar(Validation, DownloadUtils):
         if self.check_cluster_readiness():
             test_result, counter = ApiTestCases().test_apis(self.args.version, self.args.projects,
                                                             self.check_for_security_plugin(os.path.join(self.tmp_dir.path, "opensearch")) if self.args.allow_http else True)
-            execute('cat '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), '.')
+            execute('ls '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs'), '.')
             if (test_result):
                 logging.info(f'All tests Pass : {counter}')
                 return True
@@ -61,7 +61,7 @@ class ValidateTar(Validation, DownloadUtils):
 
     def cleanup(self) -> bool:
         try:
-            execute('cat '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs', 'opensearch.log'), '.')
+            execute('ls '+ os.path.join(self.tmp_dir.path, 'opensearch', 'logs'), '.')
             self.os_process.terminate()
             if ("opensearch-dashboards" in self.args.projects):
                 self.osd_process.terminate()
