@@ -22,7 +22,8 @@ pipeline {
             steps {
                 UpdateBuildFailureIssues(
                     inputManifestPath: 'manifests/3.0.0/opensearch-3.0.0.yml',
-                    distributionBuildNumber: '10343'
+                    distributionBuildNumber: '10343',
+                    buildStartTimeFrom: 'now-24h'
                     )
             }
         }
