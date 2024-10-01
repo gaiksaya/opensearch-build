@@ -20,7 +20,7 @@ pipeline {
     stages {
         stage('Hello123') {
             steps {
-                updateBuildFailureIssues(
+                UpdateBuildFailureIssues(
                     inputManifestPath: 'manifests/2.18.0/opensearch-2.18.0.yml',
                     distributionBuildNumber: '10340'
                     )
