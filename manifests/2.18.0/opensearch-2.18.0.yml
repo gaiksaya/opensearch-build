@@ -12,7 +12,7 @@ components:
     repository: https://github.com/opensearch-project/OpenSearch.git
     ref: 2.x
   - name: index-management
-    repository: https://github.com/opensearch-project/index-management.git
+    repository: https://github.com/gaiksaya/index-management.git
     ref: 2.x
     platforms:
       - linux
