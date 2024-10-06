@@ -7,7 +7,7 @@
  compatible open source license.
 */
 
-lib = library(identifier: 'jenkins@buildNotification', retriever: modernSCM([
+lib = library(identifier: 'jenkins@testNotification', retriever: modernSCM([
     $class: 'GitSCMSource',
     remote: 'https://github.com/gaiksaya/opensearch-build-libraries.git',
 ]))
@@ -18,12 +18,10 @@ pipeline {
     }
 
     stages {
-        stage('Hello123') {
+        stage('Test integTest') {
             steps {
-                UpdateBuildFailureIssues(
-                    inputManifestPath: 'manifests/3.0.0/opensearch-3.0.0.yml',
-                    distributionBuildNumber: '10343',
-                    buildStartTimeFrom: 'now-24h'
+                updateIntegTestFailureIssues(
+                    inputManifestPath: 'manifests/2.18.0/opensearch-2.18.0.yml'
                     )
             }
         }
