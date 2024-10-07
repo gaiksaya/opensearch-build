@@ -14,7 +14,7 @@ lib = library(identifier: 'jenkins@testNotificationTest', retriever: modernSCM([
 
 pipeline {
     agent {
-        label 'Jenkins-Agent-AL2-X64-C54xlarge-Docker-Host'
+        label 'Jenkins-Agent-Ubuntu2004-X64-M58xlarge-Single-Host'
     }
 
     stages {
