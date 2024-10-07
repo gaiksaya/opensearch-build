@@ -23,7 +23,7 @@ pipeline {
                 updateBuildFailureIssues(
                     inputManifestPath: 'manifests/2.18.0/opensearch-2.18.0.yml',
                     distributionBuildNumber: '10364',
-                    buildStartTimeFrom: 'now-24'
+                    buildStartTimeFrom: 'now-24h'
                     )
             }
         }
