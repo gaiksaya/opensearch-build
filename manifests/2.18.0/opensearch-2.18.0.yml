@@ -11,8 +11,8 @@ components:
   - name: OpenSearch
     repository: https://github.com/opensearch-project/OpenSearch.git
     ref: 2.x
-  - name: performance-analyzer
-    repository: https://github.com/gaiksaya/performance-analyzer.git
+  - name: index-management
+    repository: https://github.com/gaiksaya/index-management.git
     ref: 2.x
     platforms:
       - linux
