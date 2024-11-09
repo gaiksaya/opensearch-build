@@ -24,6 +24,7 @@ pipeline {
     }
     stages {
         stage('build') {
+            parellel {
             parallel {
                 stage('build-and-test-linux-x64-tar') {
                     agent  { label AGENT_LINUX_X64 }
@@ -47,7 +48,6 @@ pipeline {
                         script {
                             echo 'Stage 3'
                             sleep 30
-                            exit 1
                         }
                     }
                     post {
@@ -58,17 +58,47 @@ pipeline {
                         }
                     }
                 }
-                stage('docker-build') {
-                    agent { label AGENT_LINUX_X64 }
+            }
+            parallel {
+                stage('build-and-test-linux-x64-tar') {
+                    agent  { label AGENT_LINUX_X64 }
                     steps {
                         script {
-                            timeout(time: 5, unit: 'MINUTES') {
-                                waitUntil {
-                                    return (env.TAR_X64_SUCCESS == 'true' && env.TAR_ARM64_SUCCESS == 'true')
-                                }
-                            }
-                            echo 'Docker build done'
+                            echo 'Stage 1'
+                            sleep 30
                         }
+                    }
+                    post {
+                        success {
+                            script {
+                                env.TAR_X64_SUCCESS = 'true'
+                            }
+                        }
+                    }
+                }
+                stage('build-and-test-linux-arm64-tar') {
+                    agent  { label AGENT_LINUX_X64 }
+                    steps {
+                        script {
+                            echo 'Stage 3'
+                            sleep 30
+                        }
+                    }
+                    post {
+                        success {
+                            script {
+                                env.TAR_ARM64_SUCCESS = 'true'
+                            }
+                        }
+                    }
+                }
+            }
+            }
+            stage('docker-build') {
+                agent { label AGENT_LINUX_X64 }
+                steps {
+                    script {
+                        echo 'Docker build done'
                     }
                 }
             }

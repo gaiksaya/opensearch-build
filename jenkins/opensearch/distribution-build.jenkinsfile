@@ -836,42 +836,6 @@ pipeline {
                 }
             }
         }
-        stage('docker build') {
-            when {
-                beforeAgent true
-                allOf {
-                    expression {
-                        params.BUILD_DOCKER != 'do_not_build_docker'
-                    }
-                    expression {
-                        params.BUILD_PLATFORM.contains('linux')
-                    }
-                }
-            }
-            agent {
-                docker {
-                    label AGENT_LINUX_X64
-                    image dockerAgent.image
-                    args dockerAgent.args
-                    registryUrl 'https://public.ecr.aws/'
-                    alwaysPull true
-                }
-            }
-            steps {
-                script {
-                    echo "env.ARTIFACT_URL_LINUX_X64_TAR: ${env.ARTIFACT_URL_X64_TAR}"
-                    echo "env.ARTIFACT_URL_LINUX_ARM64_TAR: ${env.ARTIFACT_URL_ARM64_TAR}"
-
-                    buildDockerImage(
-                        inputManifest: "manifests/${INPUT_MANIFEST}",
-                        buildNumber: "${BUILD_NUMBER}",
-                        buildOption: "${BUILD_DOCKER}",
-                        artifactUrlX64: env.ARTIFACT_URL_LINUX_X64_TAR,
-                        artifactUrlArm64: env.ARTIFACT_URL_LINUX_ARM64_TAR
-                    )
-                }
-            }
-        }
     }
     post {
         always {
