@@ -27,7 +27,6 @@ pipeline {
             parallel {
                 stage('build-and-test-linux-x64-tar') {
                     agent any
-                    }
                     steps {
                         script {
                             echo 'Stage 1'
