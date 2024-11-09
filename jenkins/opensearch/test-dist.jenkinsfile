@@ -62,8 +62,10 @@ pipeline {
                     agent { label AGENT_LINUX_X64 }
                     steps {
                         script {
-                            waitUntil {
-                                return (env.TAR_X64_SUCCESS == 'true' && env.TAR_ARM64_SUCCESS == 'true')
+                            timeout(time: 5, unit: 'MINUTES') {
+                                waitUntil {
+                                    return (env.TAR_X64_SUCCESS == 'true' && env.TAR_ARM64_SUCCESS == 'true')
+                                }
                             }
                             echo 'Docker build done'
                         }
