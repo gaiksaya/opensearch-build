@@ -74,13 +74,6 @@ pipeline {
                     }
                 }
                 stage('docker-build') {
-                    steps {
-                        script {
-                            waitUntil {
-                                return (env.TAR_X64_SUCCESS == 'true' && env.TAR_ARM64_SUCCESS == 'true')
-                            }
-                        }
-                    }
                     agent {
                         docker {
                             label AGENT_LINUX_X64
@@ -92,6 +85,9 @@ pipeline {
                     }
                     steps {
                         script {
+                            waitUntil {
+                                return (env.TAR_X64_SUCCESS == 'true' && env.TAR_ARM64_SUCCESS == 'true')
+                            }
                             echo 'Docker build done'
                         }
                     }
