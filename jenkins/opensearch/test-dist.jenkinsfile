@@ -26,7 +26,7 @@ pipeline {
         stage('build') {
             parallel {
                 stage('build-and-test-linux-x64-tar') {
-                    agent any
+                    agent  { label AGENT_LINUX_X64 }
                     steps {
                         script {
                             echo 'Stage 1'
@@ -42,7 +42,7 @@ pipeline {
                     }
                 }
                 stage('build-and-test-linux-arm64-tar') {
-                    agent any
+                    agent  { label AGENT_LINUX_X64 }
                     steps {
                         script {
                             echo 'Stage 3'
@@ -58,7 +58,7 @@ pipeline {
                     }
                 }
                 stage('docker-build') {
-                    agent any
+                    agent { label AGENT_LINUX_X64 }
                     steps {
                         script {
                             waitUntil {
