@@ -24,7 +24,7 @@ pipeline {
     }
     stages {
         stage('build') {
-            parellel {
+            parallel {
             parallel {
                 stage('build-and-test-linux-x64-tar') {
                     agent  { label AGENT_LINUX_X64 }
