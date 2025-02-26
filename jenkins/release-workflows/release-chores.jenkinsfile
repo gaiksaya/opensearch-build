@@ -58,7 +58,7 @@ pipeline {
                 }
             }
         }
-        stage('Check release issue status') {
+        stage('Check release issues') {
             when {
                 expression { params.RELEASE_CHORE == 'check_release_issues' }
             }
@@ -67,7 +67,7 @@ pipeline {
                     checkReleaseIssue(
                         inputManifest: [ "manifests/${params.RELEASE_VERSION}/opensearch-${params.RELEASE_VERSION}.yml",
                         "manifests/${params.RELEASE_VERSION}/opensearch-dashboards-${params.RELEASE_VERSION}.yml" ],
-                        action: 'check'
+                        action: 'create'
                     )
                 }
             }
