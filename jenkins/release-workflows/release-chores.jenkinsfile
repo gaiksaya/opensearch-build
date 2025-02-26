@@ -7,9 +7,9 @@
  * compatible open source license.
  */
 
-lib = library(identifier: 'jenkins@8.2.0', retriever: modernSCM([
+lib = library(identifier: 'jenkins@add-another-chore', retriever: modernSCM([
     $class: 'GitSCMSource',
-    remote: 'https://github.com/opensearch-project/opensearch-build-libraries.git',
+    remote: 'https://github.com/gaiksaya/opensearch-build-libraries.git',
 ]))
 
 pipeline {
@@ -32,7 +32,7 @@ pipeline {
         )
         string(
             name: 'RELEASE_CHORE',
-            description: "Required: What release chore you wanna do? e.g: 'add_rc_details_comment'",
+            description: "Required: What release chore you wanna do? e.g: 'add_rc_details_comment, check_release_issues'",
             trim: true
         )
     }
@@ -55,6 +55,20 @@ pipeline {
                     addRcDetailsComment(
                         version: "${params.RELEASE_VERSION}"
                         )
+                }
+            }
+        }
+        stage('Check release issue status') {
+            when {
+                expression { params.RELEASE_CHORE == 'check_release_issues' }
+            }
+            steps {
+                script {
+                    checkReleaseIssue(
+                        inputManifest: [ "manifests/${params.RELEASE_VERSION}/opensearch-${params.RELEASE_VERSION}.yml",
+                        "manifests/${params.RELEASE_VERSION}/opensearch-dashboards-${params.RELEASE_VERSION}.yml" ],
+                        action: 'check'
+                    )
                 }
             }
         }
