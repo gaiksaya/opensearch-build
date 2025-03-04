@@ -78,7 +78,7 @@ pipeline {
             }
             steps {
                 script {
-                    checkNotifyAndAssignReleaseOwners(
+                    checkRequestAssignReleaseOwners(
                         inputManifest: [ "manifests/${params.RELEASE_VERSION}/opensearch-${params.RELEASE_VERSION}.yml",
                         "manifests/${params.RELEASE_VERSION}/opensearch-dashboards-${params.RELEASE_VERSION}.yml" ],
                         action: 'assig'
