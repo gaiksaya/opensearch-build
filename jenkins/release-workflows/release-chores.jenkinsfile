@@ -72,9 +72,9 @@ pipeline {
         )
     }
     stages {
-        stage('Print variables') {
+        stage('Print selected') {
             steps {
-                sh 'set'
+                sh 'echo $RELEASE_CHORE with $SELECTED_ACTION'
             }
         }
     }
