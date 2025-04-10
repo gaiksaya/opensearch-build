@@ -170,6 +170,7 @@ pipeline {
                         sh """
                                 yq eval -i '.' manifests/${params.RELEASE_VERSION}/${productName}-${params.RELEASE_VERSION}.yml
                                 sed -i '1s/^/---\\n/' manifests/${params.RELEASE_VERSION}/${productName}-${params.RELEASE_VERSION}.yml
+                                cat manifests/${params.RELEASE_VERSION}/${productName}-${params.RELEASE_VERSION}.yml
                         """
                     }
                     updateManifest("opensearch")
@@ -206,35 +207,35 @@ pipeline {
                 }
             }
         }
-        stage('Create Pull Request') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'jenkins-github-bot-token', passwordVariable: 'GITHUB_TOKEN', usernameVariable: 'GITHUB_USER')]) {
-                        try {
-                            sh """
-                                git remote set-url origin "https://opensearch-ci:${GITHUB_TOKEN}@github.com/opensearch-project/opensearch-build"
-                                git config user.email "opensearch-infra@amazon.com"
-                                git config user.name "opensearch-ci"
-                                git checkout -b manifest-lock
-                            """
-                            def status = sh(returnStdout: true, script: 'git status --porcelain')
-                            if (status) {
-                                sh """
-                                    git status --porcelain | grep '^ M' | cut -d " " -f3 | xargs git add
-                                    git commit -sm "Manifest Commit Lock for Release ${params.RELEASE_VERSION}"
-                                    git push origin manifest-lock --force
-                                    gh pr create --title '[${params.RELEASE_VERSION}] Manifest Commit Lock with action ${params.MANIFEST_LOCK_ACTION}' --body 'Manifest Commit Lock for Release ${params.RELEASE_VERSION} ' -H manifest-lock -B main
-                                """
-                            } else {
-                                println 'Nothing to commit!'
-                            }
-                        } catch (e) {
-                            error 'An error occured while creating manifest commit lock' + e.toString()
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Create Pull Request') {
+        //     steps {
+        //         script {
+        //             withCredentials([usernamePassword(credentialsId: 'jenkins-github-bot-token', passwordVariable: 'GITHUB_TOKEN', usernameVariable: 'GITHUB_USER')]) {
+        //                 try {
+        //                     sh """
+        //                         git remote set-url origin "https://opensearch-ci:${GITHUB_TOKEN}@github.com/opensearch-project/opensearch-build"
+        //                         git config user.email "opensearch-infra@amazon.com"
+        //                         git config user.name "opensearch-ci"
+        //                         git checkout -b manifest-lock
+        //                     """
+        //                     def status = sh(returnStdout: true, script: 'git status --porcelain')
+        //                     if (status) {
+        //                         sh """
+        //                             git status --porcelain | grep '^ M' | cut -d " " -f3 | xargs git add
+        //                             git commit -sm "Manifest Commit Lock for Release ${params.RELEASE_VERSION}"
+        //                             git push origin manifest-lock --force
+        //                             gh pr create --title '[${params.RELEASE_VERSION}] Manifest Commit Lock with action ${params.MANIFEST_LOCK_ACTION}' --body 'Manifest Commit Lock for Release ${params.RELEASE_VERSION} ' -H manifest-lock -B main
+        //                         """
+        //                     } else {
+        //                         println 'Nothing to commit!'
+        //                     }
+        //                 } catch (e) {
+        //                     error 'An error occured while creating manifest commit lock' + e.toString()
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
     }
     post() {
         always {
