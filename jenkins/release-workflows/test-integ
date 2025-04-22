@@ -20,8 +20,10 @@ pipeline {
             steps {
                 script {
                     checkIntegTestResultsOverview(
-                        inputManifest: ["manifests/3.0.0/opensearch-3.0.0.yml", "manifests/3.0.0/opensearch-dashboards-3.0.0.yml"]
-                        )
+                        inputManifest: [
+                            "manifests/3.0.0-beta1/opensearch-3.0.0-beta1.yml",
+                            "manifests/3.0.0-beta1/opensearch-dashboards-3.0.0-beta1.yml"
+                            ]) 
                 }
             }
         }
