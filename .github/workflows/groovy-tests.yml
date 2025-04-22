@@ -5,6 +5,7 @@ on: [push, pull_request]
 
 jobs:
   groovy-tests:
+    if: github.repository == 'opensearch-project/opensearch-build'
     runs-on: ubuntu-latest
     steps:
       - name: Setup Java

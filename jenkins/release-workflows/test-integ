@@ -1,0 +1,29 @@
+lib = library(identifier: 'jenkins@consolidate-integ-results', retriever: modernSCM([
+    $class: 'GitSCMSource',
+    remote: 'https://github.com/gaiksaya/opensearch-build-libraries.git',
+]))
+
+pipeline {
+    options {
+            timeout(time: 2, unit: 'HOURS')
+    }
+    agent {
+        docker {
+            label 'Jenkins-Agent-AL2023-X64-M54xlarge-Docker-Host'
+            image 'opensearchstaging/ci-runner:ci-runner-al2-opensearch-build-v1'
+            registryUrl 'https://public.ecr.aws/'
+            alwaysPull true
+        }
+    }
+    stages {
+        stage('test') {
+            steps {
+                script {
+                    checkIntegTestResultsOverview(
+                        inputManifest: ["manifests/3.0.0/opensearch-3.0.0.yml", "manifests/3.0.0/opensearch-dashboards-3.0.0.yml"]
+                        )
+                }
+            }
+        }
+    }
+}
