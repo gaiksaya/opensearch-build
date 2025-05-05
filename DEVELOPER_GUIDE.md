@@ -195,6 +195,7 @@ TOTAL 23491 12295 48%
 
 ### Pre-Commit Cheatsheet
 
+
 The pre-commit hook checks for imports, type, style and test.
 
 ```
