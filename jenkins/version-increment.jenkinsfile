@@ -28,7 +28,7 @@ pipeline {
             steps {
                 script {
                     handleVersionIncrementPRs(
-                        inputManifest: "manifests/3.1.0/opensearch-3.1.0.yml",
+                        inputManifest: "manifests/2.19.3/opensearch-2.19.3.yml",
                         )
                 }
             }
