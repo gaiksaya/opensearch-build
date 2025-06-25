@@ -1,0 +1,58 @@
+lib = library(identifier: 'jenkins@5.6.1', retriever: modernSCM([
+    $class: 'GitSCMSource',
+    remote: 'https://github.com/opensearch-project/opensearch-build-libraries.git',
+]))
+
+def VERSION = '2.11.0'
+def DATA_PREPPER_BUILD_NUMBER = '92'
+pipeline {
+    options {
+        timeout(time: 1, unit: 'HOURS')
+    }
+    agent none
+    stages {
+        stage('Promote Maven') {
+            agent {
+                docker {
+                    label 'Jenkins-Agent-AL2-X64-C54xlarge-Docker-Host'
+                    image 'opensearchstaging/ci-runner:ci-runner-centos7-opensearch-build-v3'
+                    args '-e JAVA_HOME=/opt/java/openjdk-11'
+                    registryUrl 'https://public.ecr.aws/'
+                    alwaysPull true
+                }
+            }
+            stages {
+                stage('Download Maven Artifacts') {
+                    steps {
+                        script {
+                            downloadPath = "${VERSION}/${DATA_PREPPER_BUILD_NUMBER}/maven"
+                            withCredentials([
+                                string(credentialsId: 'data-prepper-s3-role', variable: 'DP_S3_ROLE_NAME'),
+                                string(credentialsId: 'data-prepper-aws-account-number', variable: 'DP_AWS_ACCOUNT_NUMBER'),
+                                string(credentialsId: 'data-prepper-s3-bucket-name', variable: 'DP_S3_BUCKET_NAME'),]) {
+                                    echo 'Downloading artifacts from S3'
+                                    withAWS(role: "${DP_S3_ROLE_NAME}", roleAccount: "${DP_AWS_ACCOUNT_NUMBER}", duration: 900, roleSessionName: 'dp-jenkins-session', region: 'us-east-1') {
+                                        s3Download(file: "${WORKSPACE}/maven", bucket: "${DP_S3_BUCKET_NAME}", path: "${downloadPath}", force: true)
+                                    }
+                                }
+                        }
+                    }
+                }
+            }
+            post() {
+                always {
+                    script {
+                        postCleanup()
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                postCleanup()
+            }
+        }
+    }
+}
