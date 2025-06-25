@@ -35,7 +35,7 @@ pipeline {
                                         s3Download(file: "${WORKSPACE}/maven", bucket: "${DP_S3_BUCKET_NAME}", path: "${downloadPath}", force: true)
                                     }
                                 }
-                            sh("ls -R ${WORKSPACE}/maven/${VERSION}/${DATA_PREPPER_BUILD_NUMBER}")
+                            sh("ls -R ${WORKSPACE}/maven/${VERSION}/${DATA_PREPPER_BUILD_NUMBER}/maven")
                         }
                     }
                 }
