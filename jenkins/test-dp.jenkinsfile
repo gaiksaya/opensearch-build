@@ -39,6 +39,17 @@ pipeline {
                         }
                     }
                 }
+                stage('Publish To Maven') {
+                    steps {
+                        script {
+                            publishToMaven(
+                                signingArtifactsPath: "${WORKSPACE}/maven/${VERSION}/${DATA_PREPPER_BUILD_NUMBER}/maven",
+                                mavenArtifactsPath: "${WORKSPACE}/maven/${VERSION}/${DATA_PREPPER_BUILD_NUMBER}/maven",
+                                autoPublish: false
+                            )
+                        }
+                    }
+                }
             }
             post() {
                 always {
