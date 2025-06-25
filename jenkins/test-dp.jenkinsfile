@@ -25,7 +25,7 @@ pipeline {
                 stage('Download Maven Artifacts') {
                     steps {
                         script {
-                            downloadPath = "${VERSION}/${DATA_PREPPER_BUILD_NUMBER}/maven"
+                            def downloadPath = "${VERSION}/${DATA_PREPPER_BUILD_NUMBER}/maven"
                             withCredentials([
                                 string(credentialsId: 'data-prepper-s3-role', variable: 'DP_S3_ROLE_NAME'),
                                 string(credentialsId: 'data-prepper-aws-account-number', variable: 'DP_AWS_ACCOUNT_NUMBER'),
@@ -35,7 +35,7 @@ pipeline {
                                         s3Download(file: "${WORKSPACE}/maven", bucket: "${DP_S3_BUCKET_NAME}", path: "${downloadPath}", force: true)
                                     }
                                 }
-                            sh('ls -l ${WORKSPACE}/maven')
+                            sh("ls -l ${WORKSPACE}/maven")
                         }
                     }
                 }
@@ -46,13 +46,6 @@ pipeline {
                         postCleanup()
                     }
                 }
-            }
-        }
-    }
-    post {
-        always {
-            script {
-                postCleanup()
             }
         }
     }
