@@ -57,7 +57,7 @@ pipeline {
                     publishToMaven(
                         signingArtifactsPath: "$WORKSPACE/artifacts/opensearch/maven",
                         mavenArtifactsPath: "$WORKSPACE/artifacts/opensearch/maven",
-                        autoPublish: true,
+                        autoPublish: "boo",
                         email: "blah"
                     )
                 }
