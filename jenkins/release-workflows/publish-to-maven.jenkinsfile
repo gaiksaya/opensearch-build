@@ -58,7 +58,7 @@ pipeline {
                         signingArtifactsPath: "$WORKSPACE/artifacts/$ARTIFACT_PATH/opensearch/manifest.yml",
                         mavenArtifactsPath: "$WORKSPACE/artifacts/$ARTIFACT_PATH/opensearch/maven",
                         autoPublish: true,
-                        email: "${email}"
+                        email: "blah"
                     )
                 }
             }
