@@ -55,8 +55,8 @@ pipeline {
                     // )
                     sh("mkdir -p $WORKSPACE/artifacts/opensearch/maven/org/opensearch/opensearch/3.2.0")
                     publishToMaven(
-                        signingArtifactsPath: "$WORKSPACE/artifacts/$ARTIFACT_PATH/opensearch/manifest.yml",
-                        mavenArtifactsPath: "$WORKSPACE/artifacts/$ARTIFACT_PATH/opensearch/maven",
+                        signingArtifactsPath: "$WORKSPACE/artifacts/opensearch/maven",
+                        mavenArtifactsPath: "$WORKSPACE/artifacts/opensearch/maven",
                         autoPublish: true,
                         email: "blah"
                     )
