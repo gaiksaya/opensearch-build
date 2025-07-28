@@ -27,6 +27,7 @@ jobs:
   build-repo-issue-check:
     outputs:
       build_repo_issue_exists: ${{ steps.check_if_build_repo_issue_exists.outputs.issues }}
+      build_repo_issue_number: ${{ steps.get_build_repo_issue_number.outputs.issue_number }}
     runs-on: ubuntu-latest
     steps:
       # - name: GitHub App token
@@ -47,10 +48,23 @@ jobs:
           token: ${{ secrets.TOKS_TOKS }}
           issue-state: 'open'
           title-includes: '[RELEASE] Release version ${{ inputs.version }}'
+      - name: Build repo issue number
+        id: get_build_repo_issue_number
+        if: steps.check_if_build_repo_issue_exists.outputs.issues != '[]'
+        run: |
+          issues=$(cat <<EOF
+          ${{ steps.check_if_build_repo_issue_exists.outputs.issues }}
+          EOF
+          )
+          echo "issue_number=$(echo $issues | jq -r '.[0].number')" >> $GITHUB_OUTPUT
+
+  see-issue-number:
+    needs: build-repo-issue-check
+    runs-on: ubuntu-latest
+    steps:
       - name: See issue number
         run: |
-          issue_number=$(echo ${{ steps.check_if_build_repo_issue_exists.outputs.issues }} | jq -r '.[0].number')
-          echo "Build repo issue number: $issue_number"
+          echo "Build repo issue number: ${{needs.build-repo-issue-check.outputs.build_repo_issue_number}}"
 
 
   # component-release-issue:
