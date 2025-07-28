@@ -49,7 +49,7 @@ jobs:
           title-includes: '[RELEASE] Release version ${{ inputs.version }}'
       - name: See issue number
         run: | 
-          echo "Build repo issue exists: ${{ steps.check_if_build_repo_issue_exists.outputs.issues }}"
+          echo "Build repo issue exists: ${{ steps.check_if_build_repo_issue_exists.outputs.issues.number }}"
 
 
   # component-release-issue:
