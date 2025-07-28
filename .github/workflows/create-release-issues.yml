@@ -48,8 +48,9 @@ jobs:
           issue-state: 'open'
           title-includes: '[RELEASE] Release version ${{ inputs.version }}'
       - name: See issue number
-        run: | 
-          echo "Build repo issue exists: ${{ steps.check_if_build_repo_issue_exists.outputs.issue-number }}"
+        run: |
+          echo "issue_number=$(echo "${{ steps.check_if_build_repo_issue_exists.outputs.issues }}" | jq -r '.[0].number')" >> $GITHUB_OUTPUT
+          echo "Build repo issue number: ${{issue_number}}"
 
 
   # component-release-issue:
