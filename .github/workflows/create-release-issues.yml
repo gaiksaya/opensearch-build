@@ -49,7 +49,7 @@ jobs:
           title-includes: '[RELEASE] Release version ${{ inputs.version }}'
       - name: See issue number
         run: |
-          issue_number=$(echo "${{ steps.check_if_build_repo_issue_exists.outputs.issues }}" | jq -r '.[0].number')
+          issue_number=$(echo "${{ steps.check_if_build_repo_issue_exists.outputs.issues[0] }}" | jq -r '.[0].number')
           echo "Build repo issue number: $issue_number"
 
 
