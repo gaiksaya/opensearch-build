@@ -50,7 +50,7 @@ jobs:
       - name: See issue number
         run: |
           issues=$(cat <<EOF
-          ${{ steps.find-issue.outputs.issues }}
+          ${{ steps.check_if_build_repo_issue_exists.outputs.issues }}
           EOF
           )
           issue_number=$(echo $issues | jq -r '.[0].number')
