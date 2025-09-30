@@ -282,6 +282,6 @@ def checkAndNotifyReleaseNotes() {
             currentBuild.result = 'ABORTED'
             error('GIT_LOG_DATE parameter cannot be empty for checkReleaseNotes')
         }                    
-            echo "${params.RELEASE_VERSION}",
-            echo "${params.ACTION}"
+            echo("${params.RELEASE_VERSION}")
+            echo("${params.ACTION}")
 }
