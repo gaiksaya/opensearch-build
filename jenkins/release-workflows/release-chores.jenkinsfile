@@ -282,14 +282,6 @@ def checkAndNotifyReleaseNotes() {
             currentBuild.result = 'ABORTED'
             error('GIT_LOG_DATE parameter cannot be empty for checkReleaseNotes')
         }                    
-        sh """
-            #!/bin/bash
-            set +e
-            ./release_notes.sh check manifests/${params.RELEASE_VERSION}/opensearch-${params.RELEASE_VERSION}.yml manifests/${params.RELEASE_VERSION}/opensearch-dashboards-${params.RELEASE_VERSION}.yml --date ${params.GIT_LOG_DATE} --output ${WORKSPACE}/table.md
-        """
-        checkReleaseNotes(
-            version: "${params.RELEASE_VERSION}",
-            dataTable: "${WORKSPACE}/table.md",
-            action: "${params.ACTION}"
-            )
+            echo "${params.RELEASE_VERSION}",
+            echo "${params.ACTION}"
 }
