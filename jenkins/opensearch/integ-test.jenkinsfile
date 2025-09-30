@@ -204,67 +204,70 @@ pipeline {
                         componentTests["Testing ${local_component}"] = {
                             // Using scripted pipelines to trigger dynamic parallel stages
                             timeout(time: 4, unit: 'HOURS') {
-                                node(AGENT_LABEL) {
-                                    docker.withRegistry('https://public.ecr.aws/') {
-                                        docker.image(testDockerAgent.image).pull() // always pull latest
-                                        docker.image(testDockerAgent.image).inside(testDockerAgent.args) {
-                                            try {
-                                                stage("${local_component}") {
-                                                    // Jenkins tend to not clean up workspace at times even though ws clean is called
-                                                    // Docker is mounting the agent directory so it can communicate with the agent
-                                                    // this sometimes causes the workspace to retain last run test-results and ends with build failures
-                                                    // https://github.com/opensearch-project/opensearch-build/blob/6ed1ce3c583233eae4fe1027969d778cfc7660f7/src/test_workflow/test_recorder/test_recorder.py#L99
-                                                    if (isUnix()) {
-                                                        sh("echo ${local_component} with index ${local_component_index} will sleep ${wait_seconds} seconds to reduce load && sleep ${wait_seconds}")
-                                                    } else {
-                                                        bat"""
-                                                            bash -c "echo ${local_component} with index ${local_component_index} will sleep ${wait_seconds} seconds to reduce load && sleep ${wait_seconds}"
-                                                        """
-                                                    }
-                                                    unstash "integtest-opensearch-$BUILD_NUMBER"
-                                                    if (env.platform == 'windows') {
-                                                        echo "Unstashing the repository and downloading the artifacts from S3: ${artifactPath}"
-                                                        withSecrets(secrets: secret_artifacts) {
-                                                            downloadFromS3(
-                                                                assumedRoleName: 'opensearch-bundle',
-                                                                roleAccountNumberCred: 'jenkins-aws-account-public',
-                                                                downloadPath: "${artifactPath}/",
-                                                                bucketName: "${ARTIFACT_BUCKET_NAME}",
-                                                                localPath: "${WORKSPACE}/artifacts",
-                                                                force: true
-                                                              )
+                                retry(3) {
+                                        node(AGENT_LABEL) {
+                                        docker.withRegistry('https://public.ecr.aws/') {
+                                            docker.image(testDockerAgent.image).pull() // always pull latest
+                                            docker.image(testDockerAgent.image).inside(testDockerAgent.args) {
+                                                try {
+                                                    stage("${local_component}") {
+                                                        // Jenkins tend to not clean up workspace at times even though ws clean is called
+                                                        // Docker is mounting the agent directory so it can communicate with the agent
+                                                        // this sometimes causes the workspace to retain last run test-results and ends with build failures
+                                                        // https://github.com/opensearch-project/opensearch-build/blob/6ed1ce3c583233eae4fe1027969d778cfc7660f7/src/test_workflow/test_recorder/test_recorder.py#L99
+                                                        if (isUnix()) {
+                                                            sh("echo ${local_component} with index ${local_component_index} will sleep ${wait_seconds} seconds to reduce load && sleep ${wait_seconds}")
+                                                        } else {
+                                                            bat"""
+                                                                bash -c "echo ${local_component} with index ${local_component_index} will sleep ${wait_seconds} seconds to reduce load && sleep ${wait_seconds}"
+                                                            """
                                                         }
-                                                        bat"""
-                                                            bash -c "rm -rf $WORKSPACE/$distribution && mv -v $WORKSPACE/artifacts/${artifactPath} $WORKSPACE"
-                                                        """
-                                                    }
-                                                    else {
-                                                        echo 'Unstashing both artifacts and repository'
-                                                    }
+                                                        unstash "integtest-opensearch-$BUILD_NUMBER"
+                                                        if (env.platform == 'windows') {
+                                                            echo "Unstashing the repository and downloading the artifacts from S3: ${artifactPath}"
+                                                            withSecrets(secrets: secret_artifacts) {
+                                                                downloadFromS3(
+                                                                    assumedRoleName: 'opensearch-bundle',
+                                                                    roleAccountNumberCred: 'jenkins-aws-account-public',
+                                                                    downloadPath: "${artifactPath}/",
+                                                                    bucketName: "${ARTIFACT_BUCKET_NAME}",
+                                                                    localPath: "${WORKSPACE}/artifacts",
+                                                                    force: true
+                                                                )
+                                                            }
+                                                            bat"""
+                                                                bash -c "rm -rf $WORKSPACE/$distribution && mv -v $WORKSPACE/artifacts/${artifactPath} $WORKSPACE"
+                                                            """
+                                                        }
+                                                        else {
+                                                            echo 'Unstashing both artifacts and repository'
+                                                        }
 
-                                                    if (isUnix()) {
-                                                        sh('rm -rf test-results')
-                                                    } else {
-                                                        bat "bash -c \"rm -rf test-results\""
+                                                        if (isUnix()) {
+                                                            sh('rm -rf test-results')
+                                                        } else {
+                                                            bat "bash -c \"rm -rf test-results\""
+                                                        }
+                                                        
+                                                        runIntegTestScript(
+                                                            jobName: "$BUILD_JOB_NAME",
+                                                            componentName: "${local_component}",
+                                                            buildManifest: "$BUILD_MANIFEST",
+                                                            testManifest: "manifests/${TEST_MANIFEST}",
+                                                            localPath: "${WORKSPACE}/${distribution}",
+                                                            switchUserNonRoot: "${switch_user_non_root}"
+                                                        )
                                                     }
-                                                    runIntegTestScript(
-                                                        jobName: "$BUILD_JOB_NAME",
-                                                        componentName: "${local_component}",
-                                                        buildManifest: "$BUILD_MANIFEST",
-                                                        testManifest: "manifests/${TEST_MANIFEST}",
-                                                        localPath: "${WORKSPACE}/${distribution}",
-                                                        switchUserNonRoot: "${switch_user_non_root}"
+                                                } catch (e) {
+                                                    throw new Exception("Error running integtest for component ${local_component}", e)
+                                                } finally {
+                                                    echo "Completed running integtest for component ${local_component}"
+                                                    uploadTestResults(
+                                                        buildManifestFileName: BUILD_MANIFEST,
+                                                        jobName: JOB_NAME
                                                     )
+                                                    postCleanup()
                                                 }
-                                            } catch (e) {
-                                                throw new Exception("Error running integtest for component ${local_component}", e)
-                                            } finally {
-                                                echo "Completed running integtest for component ${local_component}"
-                                                uploadTestResults(
-                                                    buildManifestFileName: BUILD_MANIFEST,
-                                                    jobName: JOB_NAME
-                                                )
-                                                postCleanup()
                                             }
                                         }
                                     }

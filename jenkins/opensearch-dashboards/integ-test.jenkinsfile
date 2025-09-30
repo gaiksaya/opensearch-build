@@ -240,49 +240,51 @@ pipeline {
                             echo "Adding Component: ${local_component}-ci-group-${ciNum}"
 
                             componentTests["Run Integtest ${local_component}-ci-group-${ciNum}"] = {
-                              timeout(time: 3, unit: 'HOURS') {
-                                node(AGENT_LABEL) {
-                                  docker.withRegistry('https://public.ecr.aws/') {
-                                    docker.image(testDockerAgent.image).pull() // always pull latest
-                                    docker.image(testDockerAgent.image).inside(testDockerAgent.args) {
-                                      try {
-                                        stage("${local_component}-ci-group-${ciNum}") {
-                                          if (isUnix()){
-                                            sh("echo ${local_component}-ci-group-${ciNum} will sleep ${wait_seconds} seconds to reduce load && sleep ${wait_seconds}")
-                                          } else {
-                                            bat"""
-                                                bash -c "echo ${local_component}-ci-group-${ciNum} will sleep ${wait_seconds} seconds to reduce load && sleep ${wait_seconds}"
-                                            """
-                                          }
+                                timeout(time: 3, unit: 'HOURS') {
+                                    retry(3) {
+                                        node(AGENT_LABEL) {
+                                            docker.withRegistry('https://public.ecr.aws/') {
+                                                docker.image(testDockerAgent.image).pull() // always pull latest
+                                                docker.image(testDockerAgent.image).inside(testDockerAgent.args) {
+                                                    try {
+                                                        stage("${local_component}-ci-group-${ciNum}") {
+                                                            if (isUnix()) {
+                                                                sh("echo ${local_component}-ci-group-${ciNum} will sleep ${wait_seconds} seconds to reduce load && sleep ${wait_seconds}")
+                                                            } else {
+                                                                bat """
+                                                                    bash -c "echo ${local_component}-ci-group-${ciNum} will sleep ${wait_seconds} seconds to reduce load && sleep ${wait_seconds}"
+                                                                """
+                                                            }
 
-                                          withSecrets(secrets: secret_artifacts) {
-                                              runIntegTestScriptForOSD(
-                                                localComponent: "${local_component}",
-                                                switchUserNonRoot: "${switch_user_non_root}",
-                                                ciGroup: "${ciNum}",
-                                                artifactPathOpenSearch: "${artifactPathOpenSearch}",
-                                                artifactPath: "${artifactPath}",
-                                                artifactBucketName:  "${ARTIFACT_BUCKET_NAME}",
-                                                distribution: "${distribution}",
-                                                buildManifest: "${BUILD_MANIFEST}",
-                                                testManifest: "manifests/${TEST_MANIFEST}"
-                                              )
-                                          }
+                                                            withSecrets(secrets: secret_artifacts) {
+                                                                runIntegTestScriptForOSD(
+                                                                    localComponent: "${local_component}",
+                                                                    switchUserNonRoot: "${switch_user_non_root}", 
+                                                                    ciGroup: "${ciNum}",
+                                                                    artifactPathOpenSearch: "${artifactPathOpenSearch}",
+                                                                    artifactPath: "${artifactPath}",
+                                                                    artifactBucketName: "${ARTIFACT_BUCKET_NAME}",
+                                                                    distribution: "${distribution}",
+                                                                    buildManifest: "${BUILD_MANIFEST}",
+                                                                    testManifest: "manifests/${TEST_MANIFEST}"
+                                                                )
+                                                            }
+                                                        }
+                                                    } catch (e) {
+                                                        throw new Exception("Error running integtest for component ${local_component}-ci-group-${ciNum}", e)
+                                                    } finally {
+                                                        echo "Completed running integtest for component ${local_component}-ci-group-${ciNum}"
+                                                        uploadTestResults(
+                                                            buildManifestFileName: BUILD_MANIFEST,
+                                                            jobName: JOB_NAME
+                                                        )
+                                                        postCleanup()
+                                                    }
+                                                }
+                                            }
                                         }
-                                      } catch (e) {
-                                        throw new Exception("Error running integtest for component ${local_component}-ci-group-${ciNum}", e)
-                                      } finally {
-                                        echo "Completed running integtest for component ${local_component}-ci-group-${ciNum}"
-                                        uploadTestResults(
-                                          buildManifestFileName: BUILD_MANIFEST,
-                                          jobName: JOB_NAME
-                                        )
-                                        postCleanup()
-                                      }
                                     }
-                                  }
                                 }
-                              }
                             }
                           }
                         } else {
