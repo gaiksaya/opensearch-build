@@ -112,7 +112,7 @@ pipeline {
                                                             sh """
                                                                 #!/bin/bash
                                                                 set +e
-                                                                ./release_notes.sh generate manifests/${INPUT_MANIFEST} --component ${currentComponent} --date ${GIT_LOG_DATE} --max-tokens ${MAX_TOKENS} ${refParam}
+                                                                // ./release_notes.sh generate manifests/${INPUT_MANIFEST} --component ${currentComponent} --date ${GIT_LOG_DATE} --max-tokens ${MAX_TOKENS} ${refParam}
 
                                                                 if [ \$? -ne 0 ]; then
                                                                     echo "Release notes generation failed for component ${currentComponent}"
@@ -120,8 +120,10 @@ pipeline {
                                                                 else
                                                                     COMPONENT_REPO_URL="${componentObj.repository}"
                                                                     REPO_NAME=\$(basename "\${COMPONENT_REPO_URL}" .git)
+                                                                    echo "Repo name is \${REPO_NAME}"
 
                                                                     git clone -b ${componentObj.ref} "\${COMPONENT_REPO_URL}"
+                                                                    ls -l
                                                                     cd "\${REPO_NAME}"
                                                                     git ls-remote --heads origin release-chores/release-notes-${version} | grep -q release-chores/release-notes-${version}
                                                                     if [ \$? -ne 0 ]; then
