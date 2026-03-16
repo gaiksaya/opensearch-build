@@ -869,7 +869,6 @@ pipeline {
                     }
                     steps {
                         script {
-                            retry(3) {
                                 echo("Switching to Java ${env.javaVersionNumber} on Windows Docker Container")
                                 bat """
                                     bash -c "scoop reset `scoop list jdk | cut -d ' ' -f1 | grep ${env.javaVersionNumber} | head -1`"
@@ -893,7 +892,6 @@ pipeline {
                                 echo "artifactUrl (windows, x64, zip): ${artifactUrl}"
 
                                 triggerIntegrationTests(buildManifestUrl, 'windows', 'zip')
-                            }
                         }
                     }
                     post {
