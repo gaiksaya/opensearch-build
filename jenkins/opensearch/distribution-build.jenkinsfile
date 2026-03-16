@@ -10,9 +10,9 @@
 // @job-name: distribution-build-opensearch
 // @description: Build OpenSearch distribution based on the input manifest and provided parameters.
 
-lib = library(identifier: 'jenkins@11.3.0', retriever: modernSCM([
+lib = library(identifier: 'jenkins@fix-incremental', retriever: modernSCM([
     $class: 'GitSCMSource',
-    remote: 'https://github.com/opensearch-project/opensearch-build-libraries.git',
+    remote: 'https://github.com/gaiksaya/opensearch-build-libraries.git',
 ]))
 
 def secret_github_bot = [
