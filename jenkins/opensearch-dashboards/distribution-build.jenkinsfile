@@ -12,7 +12,7 @@
 
 lib = library(identifier: 'jenkins@fix-incremental', retriever: modernSCM([
     $class: 'GitSCMSource',
-    remote: 'https://github.com/opensearch-project/opensearch-build-libraries.git',
+    remote: 'https://github.com/gaiksaya/opensearch-build-libraries.git',
 ]))
 
 def secret_github_bot = [
