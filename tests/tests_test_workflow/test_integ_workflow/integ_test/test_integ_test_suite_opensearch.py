@@ -16,6 +16,7 @@ from manifests.build_manifest import BuildManifest
 from manifests.bundle_manifest import BundleComponent, BundleManifest
 from manifests.test_manifest import TestComponent, TestManifest
 from test_workflow.integ_test.integ_test_suite_opensearch import IntegTestSuiteOpenSearch, InvalidTestConfigError, ScriptFinder, Topology
+from test_workflow.integ_test.topology import ClusterEndpoint, NodeEndpoint
 
 
 @patch("os.makedirs")
@@ -302,3 +303,111 @@ class TestIntegSuiteOpenSearch(unittest.TestCase):
             MagicMock()
         )
         self.assertEqual(integ_test_suite.additional_test_report_dirs, ["integTest", "integrationTest", "integTestRemote"])
+
+    def __make_endpoint(self, host: str, port: int, transport: int) -> Any:
+        endpoint = MagicMock()
+        data_node = MagicMock()
+        data_node.endpoint = host
+        data_node.port = port
+        data_node.transport = transport
+        endpoint.data_nodes = [data_node]
+        return endpoint
+
+    @patch("os.path.exists", return_value=True)
+    @patch("test_workflow.integ_test.integ_test_suite_opensearch.TestResultData")
+    @patch("test_workflow.integ_test.integ_test_suite_opensearch.execute")
+    @patch("test_workflow.test_recorder.test_recorder.TestRecorder")
+    def test_multi_execute_integtest_sh_sharded(self, mock_test_recorder: Mock, mock_execute: Mock,
+                                                mock_test_result_data: Mock, *mock: Any) -> None:
+        """When sharding is enabled and there are multiple clusters, run one invocation per shard with -g/-t."""
+        ScriptFinder.find_integ_test_script = MagicMock(return_value="./integtest.sh")  # type: ignore
+        mock_execute.return_value = (0, "stdout", "")
+
+        test_config, component = self.__get_test_config_and_bundle_component("job-scheduler")
+        integ_test_suite = IntegTestSuiteOpenSearch(
+            MagicMock(), component, test_config, self.bundle_manifest, self.build_manifest, self.work_dir, mock_test_recorder
+        )
+        integ_test_suite.repo.dir = "dir"
+        # Force sharded mode via the raw integ_test dict the code reads.
+        integ_test_suite.test_config = MagicMock()
+        integ_test_suite.test_config.working_directory = None
+        integ_test_suite.test_config.integ_test = {"sharding": True}
+
+        endpoints = [
+            self.__make_endpoint("host0", 9200, 9300),
+            self.__make_endpoint("host1", 9201, 9301),
+        ]
+
+        status = integ_test_suite.multi_execute_integtest_sh(endpoints, True, "with-security")
+
+        # Merged status is 0 when all shards pass.
+        self.assertEqual(status, 0)
+        # Two shard invocations.
+        self.assertEqual(mock_execute.call_count, 2)
+        issued_cmds = sorted(c.args[0] for c in mock_execute.call_args_list)
+        # Shard 0 -> host0, -g 0 -t 2 ; Shard 1 -> host1, -g 1 -t 2
+        self.assertTrue(any("-b host0 -p 9200" in c and "-g 0 -t 2" in c for c in issued_cmds))
+        self.assertTrue(any("-b host1 -p 9201" in c and "-g 1 -t 2" in c for c in issued_cmds))
+        # Per-shard result data recorded for both shards.
+        self.assertEqual(mock_test_result_data.call_count, 2)
+
+    @patch("os.path.exists", return_value=True)
+    @patch("test_workflow.integ_test.integ_test_suite_opensearch.TestResultData")
+    @patch("test_workflow.integ_test.integ_test_suite_opensearch.execute")
+    @patch("test_workflow.test_recorder.test_recorder.TestRecorder")
+    def test_multi_execute_integtest_sh_sharded_merge_failure(self, mock_test_recorder: Mock, mock_execute: Mock,
+                                                              mock_test_result_data: Mock, *mock: Any) -> None:
+        """A single failing shard fails the merged status."""
+        ScriptFinder.find_integ_test_script = MagicMock(return_value="./integtest.sh")  # type: ignore
+        # First shard passes, second fails.
+        mock_execute.side_effect = [(0, "ok", ""), (1, "fail", "err")]
+
+        test_config, component = self.__get_test_config_and_bundle_component("job-scheduler")
+        integ_test_suite = IntegTestSuiteOpenSearch(
+            MagicMock(), component, test_config, self.bundle_manifest, self.build_manifest, self.work_dir, mock_test_recorder
+        )
+        integ_test_suite.repo.dir = "dir"
+        integ_test_suite.test_config = MagicMock()
+        integ_test_suite.test_config.working_directory = None
+        integ_test_suite.test_config.integ_test = {"sharding": True}
+
+        endpoints = [
+            self.__make_endpoint("host0", 9200, 9300),
+            self.__make_endpoint("host1", 9201, 9301),
+        ]
+
+        status = integ_test_suite.multi_execute_integtest_sh(endpoints, False, "without-security")
+        self.assertEqual(status, 1)
+
+    @patch("os.path.exists", return_value=True)
+    @patch("test_workflow.integ_test.integ_test_suite_opensearch.TestResultData")
+    @patch("test_workflow.integ_test.integ_test_suite_opensearch.execute")
+    @patch("test_workflow.test_recorder.test_recorder.TestRecorder")
+    def test_multi_execute_integtest_sh_sharding_off_single_call(self, mock_test_recorder: Mock, mock_execute: Mock,
+                                                                 mock_test_result_data: Mock, *mock: Any) -> None:
+        """Without the sharding flag, multiple endpoints use the single -e multi-cluster call (no -g/-t)."""
+        ScriptFinder.find_integ_test_script = MagicMock(return_value="./integtest.sh")  # type: ignore
+        mock_execute.return_value = (0, "stdout", "")
+
+        test_config, component = self.__get_test_config_and_bundle_component("job-scheduler")
+        integ_test_suite = IntegTestSuiteOpenSearch(
+            MagicMock(), component, test_config, self.bundle_manifest, self.build_manifest, self.work_dir, mock_test_recorder
+        )
+        integ_test_suite.repo.dir = "dir"
+        integ_test_suite.test_config = MagicMock()
+        integ_test_suite.test_config.working_directory = None
+        integ_test_suite.test_config.integ_test = {}  # sharding not set
+
+        endpoints = [
+            ClusterEndpoint("cluster0", [NodeEndpoint("host0", 9200, 9300)], []),
+            ClusterEndpoint("cluster1", [NodeEndpoint("host1", 9201, 9301)], []),
+        ]
+
+        integ_test_suite.multi_execute_integtest_sh(endpoints, True, "with-security")
+
+        # Exactly one invocation, using -e, and no shard coordinates.
+        self.assertEqual(mock_execute.call_count, 1)
+        cmd = mock_execute.call_args_list[0].args[0]
+        self.assertIn(" -e '", cmd)
+        self.assertNotIn("-g ", cmd)
+        self.assertNotIn("-t ", cmd)

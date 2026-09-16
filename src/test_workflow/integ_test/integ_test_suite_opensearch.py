@@ -9,6 +9,7 @@ import glob
 import json
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -104,40 +105,84 @@ class IntegTestSuiteOpenSearch(IntegTestSuite):
     def multi_execute_integtest_sh(self, cluster_endpoints: list, security: bool, test_config: str) -> int:
         script = ScriptFinder.find_integ_test_script(self.component.name, self.repo.working_directory)
 
-        def custom_node_endpoint_encoder(node_endpoint: NodeEndpoint) -> dict:
-            return {"endpoint": node_endpoint.endpoint, "port": node_endpoint.port, "transport": node_endpoint.transport}
-        if os.path.exists(script):
-            if len(cluster_endpoints) == 1 and len(cluster_endpoints[0].data_nodes) == 1:
-                single_data_node = cluster_endpoints[0].data_nodes[0]
-                cmd = f"bash {script} -b {single_data_node.endpoint} -p {single_data_node.port} -s {str(security).lower()} -v {self.bundle_manifest.build.version}"
-            else:
-                endpoints_list = []
-                for cluster_details in cluster_endpoints:
-                    endpoints_list.append(cluster_details.__dict__)
-                endpoints_string = json.dumps(endpoints_list, indent=0, default=custom_node_endpoint_encoder).replace("\n", "")
-                cmd = f"bash {script} -e '"
-                cmd = cmd + endpoints_string + "'"
-                cmd = cmd + f" -s {str(security).lower()} -v {self.bundle_manifest.build.version}"
-            self.repo_work_dir = os.path.join(
-                self.repo.dir, self.test_config.working_directory) if self.test_config.working_directory is not None else self.repo.dir
-            (status, stdout, stderr) = execute(cmd, self.repo_work_dir, True, False)
-            test_result_data_local = TestResultData(
-                self.component.name,
-                test_config,
-                status,
-                stdout,
-                stderr,
-                self.test_artifact_files
-            )
-            self.save_logs.save_test_result_data(test_result_data_local)
-            self.test_result_data.append(test_result_data_local)
-            if stderr:
-                logging.info("Stderr reported for component: " + self.component.name)
-                logging.info(stderr)
-            return status
-        else:
+        if not os.path.exists(script):
             logging.info(f"{script} does not exist. Skipping integ tests for {self.component.name}")
             return 0
+
+        self.repo_work_dir = os.path.join(
+            self.repo.dir, self.test_config.working_directory) if self.test_config.working_directory is not None else self.repo.dir
+
+        # Opt-in sharded mode: run the component script once per topology cluster in parallel,
+        # each pointed at its own cluster and passed a shard coordinate (-g <index> -t <total>),
+        # then merge the per-shard statuses. Components that do not opt in behave exactly as before.
+        # https://github.com/opensearch-project/opensearch-build/issues/6476
+        if self.test_config.integ_test.get("sharding", False) and len(cluster_endpoints) > 1:
+            return self.__execute_sharded(script, cluster_endpoints, security, test_config)
+
+        cmd = self.__build_integtest_cmd(script, cluster_endpoints, security)
+        return self.__run_integtest_cmd(cmd, test_config)
+
+    def __execute_sharded(self, script: str, cluster_endpoints: list, security: bool, test_config: str) -> int:
+        """Run integtest.sh once per shard/cluster in parallel and merge the statuses (fail if any shard fails)."""
+        shard_total = len(cluster_endpoints)
+        logging.info(f"Running {shard_total} integ-test shards in parallel for {self.component.name} ({test_config})")
+
+        def run_shard(shard_index: int) -> int:
+            endpoint = cluster_endpoints[shard_index]
+            cmd = self.__build_integtest_cmd(script, [endpoint], security, shard_index, shard_total)
+            return self.__run_integtest_cmd(cmd, test_config)
+
+        statuses = []
+        with ThreadPoolExecutor(max_workers=shard_total) as executor:
+            future_to_shard = {executor.submit(run_shard, i): i for i in range(shard_total)}
+            for future in as_completed(future_to_shard):
+                statuses.append(future.result())
+
+        # Merge: any non-zero shard status fails the whole config.
+        merged_status = next((s for s in statuses if s != 0), 0)
+        return merged_status
+
+    def __build_integtest_cmd(self, script: str, cluster_endpoints: list, security: bool,
+                              shard_index: int = None, shard_total: int = None) -> str:
+        """Build the integtest.sh command for the given endpoints, optionally with shard coordinates."""
+        def custom_node_endpoint_encoder(node_endpoint: NodeEndpoint) -> dict:
+            return {"endpoint": node_endpoint.endpoint, "port": node_endpoint.port, "transport": node_endpoint.transport}
+
+        if len(cluster_endpoints) == 1 and len(cluster_endpoints[0].data_nodes) == 1:
+            single_data_node = cluster_endpoints[0].data_nodes[0]
+            cmd = f"bash {script} -b {single_data_node.endpoint} -p {single_data_node.port} -s {str(security).lower()} -v {self.bundle_manifest.build.version}"
+        else:
+            endpoints_list = []
+            for cluster_details in cluster_endpoints:
+                endpoints_list.append(cluster_details.__dict__)
+            endpoints_string = json.dumps(endpoints_list, indent=0, default=custom_node_endpoint_encoder).replace("\n", "")
+            cmd = f"bash {script} -e '"
+            cmd = cmd + endpoints_string + "'"
+            cmd = cmd + f" -s {str(security).lower()} -v {self.bundle_manifest.build.version}"
+
+        # Optional shard coordinate passthrough (kept optional so scripts that ignore -g/-t run the full suite).
+        if shard_index is not None and shard_total is not None:
+            cmd = cmd + f" -g {shard_index} -t {shard_total}"
+
+        return cmd
+
+    def __run_integtest_cmd(self, cmd: str, test_config: str) -> int:
+        """Execute a single integtest.sh invocation, record its result data, and return the exit status."""
+        (status, stdout, stderr) = execute(cmd, self.repo_work_dir, True, False)
+        test_result_data_local = TestResultData(
+            self.component.name,
+            test_config,
+            status,
+            stdout,
+            stderr,
+            self.test_artifact_files
+        )
+        self.save_logs.save_test_result_data(test_result_data_local)
+        self.test_result_data.append(test_result_data_local)
+        if stderr:
+            logging.info("Stderr reported for component: " + self.component.name)
+            logging.info(stderr)
+        return status
 
     @property
     def additional_test_report_dirs(self) -> list[str]:

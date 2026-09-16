@@ -46,3 +46,27 @@ class TestTestManifest(unittest.TestCase):
         for version in TestManifest.VERSIONS:
             manifest = TestManifest.from_path(os.path.join(self.data_path, "test", f"opensearch-test-schema-version-{version}.yml"))
             self.assertEqual(version, manifest.version)
+
+    def test_integ_test_sharding_field(self) -> None:
+        data = {
+            "schema-version": "1.1",
+            "name": "OpenSearch",
+            "components": [
+                {
+                    "name": "k-NN",
+                    "integ-test": {
+                        "test-configs": ["with-security", "without-security"],
+                        "sharding": True,
+                        "topology": [
+                            {"cluster_name": "cluster0", "data_nodes": 1},
+                            {"cluster_name": "cluster1", "data_nodes": 1},
+                        ],
+                    },
+                }
+            ],
+        }
+        # Should validate against the 1.1 schema and expose the sharding flag on the raw integ_test dict.
+        manifest = TestManifest(data)
+        component = manifest.components["k-NN"]
+        self.assertTrue(component.integ_test.get("sharding"))
+        self.assertEqual(len(component.topology.cluster_configs), 2)

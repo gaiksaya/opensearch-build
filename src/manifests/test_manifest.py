@@ -38,6 +38,14 @@ The format for schema version 1.1 is:
           additional-cluster-configs:
             - key : value
           ci-group: 6
+          topology:
+            - cluster_name: cluster1
+              data_nodes: 1
+            - cluster_name: cluster2
+              data_nodes: 1
+          sharding: true  # optional; when true, run integtest.sh once per topology cluster in
+                          # parallel, passing shard coordinates (-g <index> -t <total>) to the
+                          # component script, and merge the per-shard results.
         bwc-test:
           test-configs:
             - with-security
@@ -108,7 +116,8 @@ class TestManifest(ComponentManifest['TestManifest', 'TestComponents']):
                             },
                             "test-configs": {"type": "list", "allowed": ["with-security", "without-security"]},
                             "additional-cluster-configs": {"type": "dict"},
-                            "ci-groups": {"type": "integer"}
+                            "ci-groups": {"type": "integer"},
+                            "sharding": {"type": "boolean"}
                         },
                     },
                     "bwc-test": {

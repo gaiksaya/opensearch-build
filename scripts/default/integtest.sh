@@ -26,11 +26,13 @@ function usage() {
     echo -e "-c CREDENTIAL\t(usename:password), no defaults, effective when SECURITY_ENABLED=true."
     echo -e "-v OPENSEARCH_VERSION\t, no defaults"
     echo -e "-n SNAPSHOT\t, defaults to false"
+    echo -e "-g SHARD_INDEX\t(optional) 0-based shard index for sharded/parallel integ tests. Requires -t."
+    echo -e "-t SHARD_TOTAL\t(optional) total number of shards for sharded/parallel integ tests. Requires -g."
     echo -e "-h\tPrint this message."
     echo "--------------------------------------------------------------------------"
 }
 
-while getopts ":hb:p:s:c:v:n:" arg; do
+while getopts ":hb:p:s:c:v:n:g:t:" arg; do
     case $arg in
         h)
             usage
@@ -53,6 +55,12 @@ while getopts ":hb:p:s:c:v:n:" arg; do
             ;;
         n)
             SNAPSHOT=$OPTARG
+            ;;
+        g)
+            SHARD_INDEX=$OPTARG
+            ;;
+        t)
+            SHARD_TOTAL=$OPTARG
             ;;
         :)
             echo "-${OPTARG} requires an argument"
@@ -102,4 +110,11 @@ fi
 USERNAME=`echo $CREDENTIAL | awk -F ':' '{print $1}'`
 PASSWORD=`echo $CREDENTIAL | awk -F ':' '{print $2}'`
 
-./gradlew integTest -Dopensearch.version=$OPENSEARCH_VERSION -Dbuild.snapshot=$SNAPSHOT -Dtests.rest.cluster="$BIND_ADDRESS:$BIND_PORT" -Dtests.cluster="$BIND_ADDRESS:$BIND_PORT" -Dtests.clustername="opensearch-integrationtest" -Dhttps=$SECURITY_ENABLED -Duser=$USERNAME -Dpassword=$PASSWORD --console=plain
+# Optional test sharding: when both -g (shard index) and -t (shard total) are provided, pass them
+# through to Gradle so the suite runs only its shard's subset. When absent, the full suite runs.
+SHARD_ARGS=""
+if [ -n "$SHARD_INDEX" ] && [ -n "$SHARD_TOTAL" ]; then
+  SHARD_ARGS="-Dtest.shard.index=$SHARD_INDEX -Dtest.shard.total=$SHARD_TOTAL"
+fi
+
+./gradlew integTest -Dopensearch.version=$OPENSEARCH_VERSION -Dbuild.snapshot=$SNAPSHOT -Dtests.rest.cluster="$BIND_ADDRESS:$BIND_PORT" -Dtests.cluster="$BIND_ADDRESS:$BIND_PORT" -Dtests.clustername="opensearch-integrationtest" -Dhttps=$SECURITY_ENABLED -Duser=$USERNAME -Dpassword=$PASSWORD $SHARD_ARGS --console=plain
